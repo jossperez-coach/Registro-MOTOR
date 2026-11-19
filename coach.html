@@ -100,9 +100,53 @@ th{background:var(--soft);font-weight:700}
 .foot button{font:inherit;background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer}
 @media (max-width:420px){.row{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:no-preference){.msg{animation:in .18s ease-out}@keyframes in{from{transform:translateY(4px)}to{transform:none}}}
+
+body.coach .wrap,body.coach .wrap.wide{max-width:1120px}
+.ctrl{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}.ctrl label{min-width:180px}
+.only-present{display:none}
+body.present .no-present,body.present header:not(.sh),body.present nav,body.present .foot{display:none!important}
+body.present .only-present{display:inline-block;margin:0 0 10px}
+body.present .wrap{max-width:none;padding:12px}
+#sheet-wrap{position:relative;overflow:hidden}
+#sheet{width:1040px;height:720px;transform-origin:0 0;background:#FAF7F2;color:#1E1E1C;padding:16px 20px;box-sizing:border-box;display:flex;flex-direction:column;gap:8px;font-family:"Nunito Sans",system-ui,sans-serif;border:1px solid #E6E0D5;border-radius:10px}
+#sheet .sh{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+#sheet .sk{font-size:9.5px;font-weight:700;letter-spacing:.06em;color:#6B7949}
+#sheet .st{font-family:Lora,Georgia,serif;font-size:21px;font-weight:600;line-height:1.15}
+#sheet .ss{font-size:10.5px;color:#6E6B64}
+#sheet .hright{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+#sheet .zone{font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;background:#EFE9DE}
+#sheet .zone.ok{background:#6B7949;color:#FAF7F2}#sheet .zone.warn{background:#DBC8A5;color:#1E1E1C}#sheet .zone.bad{background:#A55942;color:#FAF7F2}
+#sheet .srbai{display:flex;align-items:center;gap:6px;font-size:10.5px}#sheet .meter{width:90px;height:7px;background:#E6E0D5;border-radius:4px;overflow:hidden}#sheet .meter i{display:block;height:100%;background:#2D3F56}
+#sheet .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+#sheet .tile{background:#FFFFFF;border:1px solid #E6E0D5;border-radius:8px;padding:8px 12px}
+#sheet .tl{font-size:11px;font-weight:700;color:#55534E}#sheet .tb{font-family:Lora,Georgia,serif;font-size:30px;font-weight:600;line-height:1.05}
+#sheet .dl{font-size:11px;font-weight:700;color:#6E6B64}#sheet .dl.up{color:#4F5B33}#sheet .dl.down{color:#A55942}
+#sheet .ts{font-size:10px;color:#6E6B64}
+#sheet .cap{font-size:9.5px;color:#6E6B64;font-style:italic;margin-top:-2px}
+#sheet .grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:1fr 1fr;gap:10px}
+#sheet .pn{background:#FFFFFF;border:1px solid #E6E0D5;border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;min-height:0}
+#sheet .pn h4{margin:0 0 4px;font-size:11.5px;font-weight:700}
+#sheet .cw{position:relative;flex:1;min-height:0}#sheet .col{display:flex;flex-direction:column;flex:1;min-height:0;gap:4px}
+#sheet .lg{display:flex;flex-wrap:wrap;gap:8px;font-size:9.5px;color:#55534E}#sheet .lg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:3px;vertical-align:-1px}
+#sheet .cal{display:grid;grid-template-columns:44px repeat(7,1fr);gap:3px;font-size:9.5px;align-content:start;flex:1}
+#sheet .cd{text-align:center;color:#6E6B64;font-weight:700}#sheet .cw2{color:#6E6B64;white-space:nowrap}
+#sheet .cc{height:16px;border-radius:3px}#sheet .cc.comp{background:#6B7949}#sheet .cc.min{background:#B3BC8E}#sheet .cc.no{background:#A55942}#sheet .cc.sin{background:#D8CFC0}#sheet .cc.libre{background:#EFE9DE;outline:1px dashed #B9B0A0;outline-offset:-1px}#sheet .cc.extra{background:#6B7949;opacity:.55}#sheet .cc.out{background:transparent}
+#sheet .sf{font-size:8.5px;color:#8E8A80}
+@media print{@page{size:A4 landscape;margin:8mm}
+ html,body{margin:0!important;padding:0!important;background:#fff!important}
+ body *{visibility:visible}
+ .wrap{max-width:none!important;margin:0!important;padding:0!important}
+ .wrap > :not(#v-panel){display:none!important}
+ #v-panel > .card,#pa-out > .card,#pa-salir,#pa-dash,.toast{display:none!important}
+ #v-panel,#pa-out{display:block!important;margin:0!important;padding:0!important}
+ #sheet-wrap{height:auto!important;overflow:visible!important}
+ #sheet{transform:none!important;border:none;page-break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 </style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Lora:wght@600&family=Nunito+Sans:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
-<body>
+<body class="coach">
 <div class="wrap" id="wrap">
   <header>
     <div class="brand"><b>MOTOR</b><span>Del talento al hábito · registro diario</span></div>
@@ -199,24 +243,25 @@ th{background:var(--soft);font-weight:700}
 
   <!-- PANEL DE LA COACH -->
   <section id="v-panel" hidden>
-    <div class="card">
+    <div class="card no-present">
       <h1>Panel de la coach</h1>
-      <p class="muted">Sube tu libro Excel maestro y los archivos nuevos, o pega los mensajes de WhatsApp tal cual. Todo se une sin duplicados. Al terminar, descarga el libro Excel actualizado: la próxima vez empiezas subiéndolo.</p>
+      <p class="muted">Sube tu libro Excel maestro y los archivos nuevos, o pega los mensajes de WhatsApp tal cual. Todo se une sin duplicados y nada se guarda en esta página: al cerrarla, se borra.</p>
       <label>Archivos (tu libro Excel maestro y los que te envíen)<input type="file" id="pa-files" accept=".xlsx,.csv,text/csv" multiple></label>
-      <label>O pega aquí el texto<textarea id="pa-paste" rows="4" placeholder="Registro MOTOR · …"></textarea></label>
-      <div class="inline"><button class="btn sec" id="pa-agregar">Agregar texto pegado</button><button class="btn sec" id="pa-limpiar">Vaciar</button></div>
+      <label>O pega aquí el texto<textarea id="pa-paste" rows="3" placeholder="Registro MOTOR · …"></textarea></label>
+      <div class="inline"><button class="btn sec" id="pa-agregar">Agregar texto pegado</button><button class="btn sec" id="pa-limpiar">Vaciar</button><button class="btn sec" id="pa-descargar">Descargar libro Excel maestro</button></div>
       <p class="toast" id="pa-toast"></p>
     </div>
-    <div id="pa-out" hidden style="display:flex;flex-direction:column;gap:16px">
-      <div class="card">
-        <div class="row">
-          <label>Participante<select id="pa-part"></select></label>
-          <label>Periodo<select id="pa-per"><option value="7">Últimos 7 días</option><option value="14" selected>Últimos 14 días</option><option value="0">Todo</option></select></label>
-        </div>
-        <p class="muted" id="pa-rango"></p>
+    <div id="pa-out" hidden>
+      <div class="card no-present ctrl">
+        <label>Participante<select id="pa-part"></select></label>
+        <label id="pa-hab-row" hidden>Hábito<select id="pa-hab"></select></label>
+        <label>Periodo<select id="pa-per"><option value="0" selected>Todo desde el inicio</option><option value="14">Últimos 14 días</option></select></label>
+        <div class="inline"><button class="btn" id="pa-present">Modo presentación</button><button class="btn sec" id="pa-pdf">Descargar PDF</button><button class="btn sec" id="pa-png">Descargar imagen</button></div>
+        <p class="toast" id="pa-toast2"></p><p class="muted" id="pa-rango" hidden></p>
       </div>
-      <div id="pa-dash" style="display:flex;flex-direction:column;gap:16px"></div>
-      <div class="card"><button class="btn" id="pa-descargar">Descargar libro Excel maestro</button><p class="muted">Incluye una hoja «Registros» con todo lo acumulado (es la que el panel vuelve a leer) y una hoja «Resumen» con los indicadores de cada participante desde el inicio.</p></div>
+      <button class="btn sec only-present" id="pa-salir">Salir del modo presentación (Esc)</button>
+      <div id="sheet-wrap"><div id="sheet"></div></div>
+      <div id="pa-dash" hidden></div>
     </div>
   </section>
 
@@ -593,7 +638,7 @@ function addRows(rows){let n=0;rows.forEach(o=>{if(!o.participante||(!o.fecha&&o
 $('pa-files').addEventListener('change',async e=>{let n=0;for(const f of e.target.files){try{n+=addRows(await readFileRows(f))}catch(err){$('pa-toast').textContent='No pude leer '+f.name+'.'}}$('pa-toast').textContent=n+' fila'+(n===1?'':'s')+' nueva'+(n===1?'':'s')+'.';e.target.value='';renderPanel()});
 $('pa-agregar').addEventListener('click',()=>{const n=addRows(parseCSV($('pa-paste').value));$('pa-paste').value='';$('pa-toast').textContent=n?n+' fila'+(n===1?'':'s')+' nueva'+(n===1?'':'s')+'.':'No encontré registros. Revisa que el texto incluya la línea de encabezados.';renderPanel()});
 $('pa-limpiar').addEventListener('click',()=>{pool={};$('pa-toast').textContent='Panel vacío.';renderPanel()});
-$('pa-part').addEventListener('change',renderDash);$('pa-per').addEventListener('change',renderDash);
+$('pa-part').addEventListener('change',renderHabSel);$('pa-per').addEventListener('change',renderDash);
 $('pa-descargar').addEventListener('click',()=>{
   const regs=Object.values(pool).sort((a,b)=>(a.participante+a.tipo+(a.fecha||'')).localeCompare(b.participante+b.tipo+(b.fecha||'')));
   const leeme=[['Libro maestro del Registro MOTOR · generado el '+today()],[''],['Registros: todo lo recibido, sin duplicados. Es la hoja que el panel vuelve a leer: no cambies sus columnas.'],
@@ -604,12 +649,6 @@ $('pa-descargar').addEventListener('click',()=>{
   const x=toXlsx([['Léeme',leeme,null,true],['Resumen',resumenRows()],['Registros',regs,COLS]]);
   if(!x){$('pa-toast').textContent='No se pudo preparar el Excel (no cargó la librería). Revisa tu conexión y recarga la página.';return}
   saveFile('motor-libro-maestro-'+today()+'.xlsx',x,$('pa-toast'));});
-function renderPanel(){
-  const parts=[...new Set(Object.values(pool).map(r=>r.participante))].sort();
-  $('pa-out').hidden=!parts.length;if(!parts.length)return;
-  const sel=$('pa-part'),cur=sel.value;sel.innerHTML='';parts.forEach(p=>sel.append(el('option',{value:p,text:p})));if(parts.includes(cur))sel.value=cur;
-  renderDash();
-}
 const pct=(a,b)=>b?Math.round(a/b*100):null;
 const pctTxt=v=>v==null?'—':v+' %';
 function zone(v,h){if(v==null)return['','Sin datos'];const ver=+h.verde||80,roj=+h.rojo||40;return v>=ver?['ok','Verde']:v<=roj?['bad','Rojo']:['warn','Amarillo']}
@@ -647,61 +686,148 @@ function resumenRows(){
   });
   return out;
 }
-function renderDash(){
-  const P=$('pa-part').value,per=+$('pa-per').value,rows=Object.values(pool).filter(r=>r.participante===P);
-  const D=$('pa-dash');D.innerHTML='';
-  const diarios=rows.filter(r=>r.tipo==='diario');
-  const fechas=rows.filter(r=>r.fecha).map(r=>r.fecha).sort();if(!fechas.length){D.append(el('p',{class:'muted',text:'Sin registros.'}));return}
-  const fin=fechas[fechas.length-1];
-  const plans=plansFor(rows);
-  const ini0=per?addDays(fin,-(per-1)):fechas[0];
-  $('pa-rango').textContent='Del '+fmt(ini0)+' al '+fmt(fin)+' (último dato recibido).';
-  Object.values(plans).forEach(h=>{
-    const {plannedDays,reg,cumpl,comp,soloMin,sinReg,extra,cumplPct,dosis,espont}=metrics(h,diarios,ini0,fin);
-    const [zc,zl]=zone(cumplPct,h);
-    const card=el('div',{class:'card'});
-    card.append(el('div',{class:'hab-top'},el('div',null,el('h2',{text:h.habito}),el('p',{class:'muted',text:(h.tipo_habito==='meta'?'Hábito de la meta':'Micro hábito')+' · objetivo '+h.objetivo+' '+(h.unidad||'')+' · mínima '+h.minima+' '+(h.unidad||'')+' · días '+(h.dias_plan||'todos')})),
-      el('span',{class:'pill '+zc,text:(zc==='ok'?'✓ ':zc==='bad'?'! ':zc==='warn'?'~ ':'')+'Semáforo: '+zl})));
-    card.append(el('div',{class:'kpis'},
-      kpi(pctTxt(cumplPct),'Cumplimiento: '+cumpl.length+' de '+plannedDays.length+' días planificados'),
-      kpi(pctTxt(dosis),'Dosis: valor medio frente al objetivo'),
-      kpi(cumpl.length?soloMin+' de '+cumpl.length:'—','Días en mínimo'),
-      kpi(pctTxt(espont),'Ejecución espontánea (sin recordatorio)')));
-    if(cumpl.length){const st=el('div',{class:'stack',role:'img','aria-label':comp.length+' días completos y '+soloMin+' solo con la mínima'});
-      if(comp.length)st.append(el('div',{style:'width:'+comp.length/cumpl.length*100+'%;background:var(--full)',title:comp.length+' días completos'}));
-      if(soloMin)st.append(el('div',{style:'width:'+soloMin/cumpl.length*100+'%;background:var(--part)',title:soloMin+' días solo la mínima'}));
-      card.append(el('div',{style:'display:flex;flex-direction:column;gap:6px'},el('h3',{text:'Completo frente a solo la mínima'}),st,
-        el('div',{class:'legend'},el('span',null,el('i',{style:'background:var(--full)'}),'Completo · '+comp.length),el('span',null,el('i',{style:'background:var(--part)'}),'Solo la mínima · '+soloMin))))}
-    if(sinReg||extra)card.append(el('p',{class:'muted',text:(sinReg?sinReg+' día'+(sinReg>1?'s':'')+' planificado'+(sinReg>1?'s':'')+' sin registro (cuentan como no cumplidos). ':'')+(extra?extra+' día'+(extra>1?'s':'')+' libre'+(extra>1?'s':'')+' en que igual lo hizo (no entran en el porcentaje).':'')}));
-    /* semana a semana */
-    const weeks={};plannedDays.forEach(f=>{const w=weekStart(f);(weeks[w]=weeks[w]||{p:0,c:0}).p++;if(cumpl.some(r=>r.fecha===f))weeks[w].c++});
-    const wk=Object.keys(weeks).sort();
-    if(wk.length){const bars=el('div',{class:'bars'});wk.forEach(w=>{const v=pct(weeks[w].c,weeks[w].p);
-      bars.append(el('div',{class:'bar-row',title:'Semana del '+fmt(w)+': '+weeks[w].c+' de '+weeks[w].p+' días'},el('span',{class:'muted',text:'Sem. '+fmt(w).replace(/^\w+\.?,?\s*/,'')}),
-        el('div',{class:'bar-track'},el('div',{class:'bar-fill',style:'width:'+(v||0)+'%'})),el('span',{text:pctTxt(v)})))});
-      card.append(el('div',{style:'display:flex;flex-direction:column;gap:6px'},el('h3',{text:'Cumplimiento semana a semana'}),bars))}
-    /* qué falló */
-    const fall=reg.filter(r=>r.motivo);
-    if(fall.length){const cnt={};fall.forEach(r=>{const k=r.motivo==='pokayoke'?'Poka-yoke: '+(r.pokayoke||'sin especificar'):(MOTIVOS.find(m=>m[0]===r.motivo)||[0,r.motivo])[1];cnt[k]=(cnt[k]||0)+1});
-      const T=el('table');T.append(el('tr',null,el('th',{text:'Qué pasó cuando no lo completó'}),el('th',{text:'Días'})));
-      Object.entries(cnt).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>T.append(el('tr',null,el('td',{text:k}),el('td',{text:String(v)}))));
-      card.append(el('div',{class:'tablewrap'},T))}
-    /* SRBAI */
-    const sr=rows.filter(r=>r.tipo==='srbai'&&r.habito_id===h.habito_id).sort((a,b)=>a.fecha.localeCompare(b.fecha));
-    if(sr.length)card.append(el('p',null,el('b',{text:'SRBAI: '}),sr.map(s=>fmt(s.fecha)+' → '+String(s.srbai_prom).replace('.',',')).join(' · ')));
-    /* hito */
-    const hi=rows.filter(r=>r.tipo==='hito'&&r.habito_id===h.habito_id).pop();
-    if(h.hito)card.append(el('p',null,el('b',{text:'Hito: '}),h.hito+' ('+h.hito_fecha+') · '+(hi?(hi.hito_alcanzado==='si'?'alcanzado'+(hi.fortaleza?', con '+hi.fortaleza:''):'no alcanzado todavía'):'sin respuesta')));
-    if(h.pokayokes)card.append(el('p',{class:'muted',text:'Poka-yokes: '+h.pokayokes}));
-    D.append(card);
-  });
-  const fz=rows.filter(r=>r.tipo==='fortaleza').sort((a,b)=>a.fecha.localeCompare(b.fecha));
-  const notas=rows.filter(r=>r.tipo==='nota'&&r.fecha>=ini0).sort((a,b)=>a.fecha.localeCompare(b.fecha));
-  if(fz.length||notas.length){const c=el('div',{class:'card'});
-    if(fz.length){c.append(el('h2',{text:'Fortalezas de la semana'}));const T=el('table');T.append(el('tr',null,el('th',{text:'Semana del'}),el('th',{text:'Fortaleza'})));fz.forEach(r=>T.append(el('tr',null,el('td',{text:fmt(weekStart(r.fecha))}),el('td',{text:r.fortaleza}))));c.append(el('div',{class:'tablewrap'},T))}
-    if(notas.length){c.append(el('h2',{text:'Notas del periodo'}));notas.forEach(r=>c.append(el('p',null,el('b',{text:fmt(r.fecha)+': '}),r.nota)))}
-    D.append(c)}
+/* ---------- TABLERO DE UNA HOJA (Panel MOTOR v2) ---------- */
+const CHARTS=[];
+const C={comp:'#6B7949',min:'#B3BC8E',no:'#A55942',sin:'#D8CFC0',libre:'#EFE9DE',noche:'#2D3F56',arena:'#DBC8A5',grid:'#E6E0D5',tick:'#6E6B64',ink:'#1E1E1C'};
+const MOT={senal:'Faltó la señal',capacidad:'Difícil o sin tiempo',motivacion:'Sin ganas u otra prioridad',pokayoke:'Falló una protección',otra:'Otra razón'};
+const ddiff=(a,b)=>Math.round((parse(b)-parse(a))/864e5);
+const shortTxt=(s,n)=>s.length>n?s.slice(0,n-1)+'…':s;
+function killCharts(){while(CHARTS.length)CHARTS.pop().destroy()}
+function chart(id,cfg){if(typeof Chart==='undefined')return;cfg.options=Object.assign({responsive:true,maintainAspectRatio:false,animation:false,devicePixelRatio:2},cfg.options||{});CHARTS.push(new Chart(document.getElementById(id),cfg))}
+function delta(cur,prev,good){
+  if(cur==null||prev==null)return el('span',{class:'dl',text:'sin comparación'});
+  const d=cur-prev;const cls=d===0||good===0?'dl':((d>0)===(good>0)?'dl up':'dl down');
+  return el('span',{class:cls,text:(d>0?'▲ +':d<0?'▼ −':'= ')+(d===0?'igual':Math.abs(d)+(good===0?'':' puntos'))});
 }
+function dayList(h,diarios,from,to){
+  const out=[];const plan=h.dias_plan||'LMXJVSD';
+  for(let f=from;f<=to;f=addDays(f,1)){
+    const r=diarios.find(x=>x.habito_id===h.habito_id&&x.fecha===f);const p=plan.includes(DIAS[wd(f)]);let st;
+    if(!p)st=r&&r.cumplio_minima==='si'?'extra':'libre';
+    else if(!r)st='sin';
+    else st=r.cumplio_habito==='si'?'comp':r.cumplio_minima==='si'?'min':'no';
+    out.push({f,p,st,r,valor:r&&r.valor!==''?+r.valor:null,sinrec:r&&r.sin_recordatorio==='si',w:Math.floor(ddiff(h.inicio,f)/7),b:Math.floor(ddiff(h.inicio,f)/14)});
+  }return out;
+}
+function stat(days,obj){
+  const P=days.filter(d=>d.p),c=P.filter(d=>d.st==='comp'||d.st==='min'),comp=P.filter(d=>d.st==='comp').length;
+  const vals=c.map(d=>d.valor).filter(v=>v!=null&&!isNaN(v));
+  return {p:P.length,c:c.length,comp,min:c.length-comp,no:P.length-c.length,cumpl:pct(c.length,P.length),
+    dosis:vals.length&&+obj?Math.round(vals.reduce((a,b)=>a+b,0)/vals.length/(+obj)*100):null,espont:pct(c.filter(d=>d.sinrec).length,c.length)};
+}
+function tile(label,big,dl,sub,sub2){return el('div',{class:'tile'},el('div',{class:'tl',text:label}),el('div',{class:'tb',text:big}),dl,el('div',{class:'ts',text:sub}),sub2?el('div',{class:'ts',text:sub2}):'')}
+
+function renderPanel(){
+  const parts=[...new Set(Object.values(pool).map(r=>r.participante))].sort();
+  $('pa-out').hidden=!parts.length;if(!parts.length){killCharts();return}
+  const sel=$('pa-part'),cur=sel.value;sel.innerHTML='';parts.forEach(p=>sel.append(el('option',{value:p,text:p})));if(parts.includes(cur))sel.value=cur;
+  renderHabSel();
+}
+function renderHabSel(){
+  const P=$('pa-part').value,rows=Object.values(pool).filter(r=>r.participante===P),plans=Object.values(plansFor(rows));
+  const s=$('pa-hab'),cur=s.value;s.innerHTML='';plans.forEach(h=>s.append(el('option',{value:h.habito_id,text:h.habito||'Micro hábito'})));
+  if(plans.some(h=>h.habito_id===cur))s.value=cur;else{const m=plans.find(h=>h.tipo_habito!=='meta');if(m)s.value=m.habito_id}
+  $('pa-hab-row').hidden=plans.length<2;
+  renderDash();
+}
+function renderDash(){
+  killCharts();
+  const P=$('pa-part').value,rows=Object.values(pool).filter(r=>r.participante===P),D=$('sheet');D.innerHTML='';
+  const plans=plansFor(rows),h=plans[$('pa-hab').value]||Object.values(plans)[0];
+  const diarios=rows.filter(r=>r.tipo==='diario');
+  const fechas=diarios.filter(r=>r.habito_id===(h&&h.habito_id)).map(r=>r.fecha).sort();
+  if(!h||!fechas.length){D.append(el('p',{class:'muted',text:'Sin registros diarios para este hábito.'}));fitSheet();return}
+  const fin=fechas[fechas.length-1],ini=h.inicio&&h.inicio<=fin?h.inicio:fechas[0];h.inicio=ini;
+  const all=dayList(h,diarios,ini,fin);
+  const from=+$('pa-per').value?(addDays(fin,-13)>ini?addDays(fin,-13):ini):ini;
+  const days=all.filter(d=>d.f>=from);
+  const ver=+h.verde||80,roj=+h.rojo||40;
+  /* semanas y bloques (desde el inicio del hábito) */
+  const W=[...new Set(days.map(d=>d.w))].sort((a,b)=>a-b),B=[...new Set(days.map(d=>d.b))].sort((a,b)=>a-b);
+  const lw=all[all.length-1].w,lb=all[all.length-1].b;
+  const sw=w=>stat(all.filter(d=>d.w===w),h.objetivo),sb=b=>stat(all.filter(d=>d.b===b),h.objetivo);
+  const cw=sw(lw),pw=sw(lw-1),cb=sb(lb),pb=sb(lb-1);
+  const nDaysLw=all.filter(d=>d.w===lw).length;
+  const zone=cb.cumpl==null?['','Sin datos']:cb.cumpl>=ver?['ok','Verde']:cb.cumpl<=roj?['bad','Rojo']:['warn','Amarillo'];
+  const u=h.unidad||'';
+  /* encabezado */
+  const sr=rows.filter(r=>r.tipo==='srbai'&&r.habito_id===h.habito_id).sort((a,b)=>a.fecha.localeCompare(b.fecha)).pop();
+  const right=el('div',{class:'hright'},el('span',{class:'zone '+zone[0],text:'Semáforo del bloque actual: '+zone[1]}));
+  if(sr){const v=+String(sr.srbai_prom).replace(',','.');right.append(el('div',{class:'srbai'},el('span',{text:'Automaticidad (SRBAI)'}),
+    el('div',{class:'meter'},el('i',{style:'width:'+Math.max(0,Math.min(100,(v-1)/4*100))+'%'})),el('b',{text:String(v).replace('.',',')+' / 5'})))}
+  D.append(el('header',{class:'sh'},el('div',null,el('div',{class:'sk',text:'PANEL MOTOR · '+P}),el('div',{class:'st',text:h.habito||'Micro hábito'}),
+    el('div',{class:'ss',text:'Objetivo '+h.objetivo+' '+u+' · mínima '+h.minima+' '+u+' · días '+(h.dias_plan||'todos')+' · semáforo: verde desde '+ver+' %, rojo hasta '+roj+' % · del '+fmt(from)+' al '+fmt(fin)})),right));
+  /* indicadores principales */
+  const wl='Semana '+(lw+1)+(nDaysLw<7?' (en curso, '+nDaysLw+' días)':'')+' frente a la semana '+lw;
+  D.append(el('div',{class:'tiles'},
+    tile('Cumplimiento',cw.cumpl==null?'—':cw.cumpl+' %',delta(cw.cumpl,pw.cumpl,1),cw.c+' de '+cw.p+' días planificados','Bloque de 14 días: '+(cb.cumpl==null?'—':cb.cumpl+' %')+(pb.cumpl!=null&&cb.cumpl!=null?' ('+(cb.cumpl-pb.cumpl>=0?'+':'−')+Math.abs(cb.cumpl-pb.cumpl)+' frente al anterior)':'')),
+    tile('Dosis',cw.dosis==null?'—':cw.dosis+' %',delta(cw.dosis,pw.dosis,1),'Valor medio frente al objetivo','Bloque de 14 días: '+(cb.dosis==null?'—':cb.dosis+' %')+(pb.dosis!=null&&cb.dosis!=null?' ('+(cb.dosis-pb.dosis>=0?'+':'−')+Math.abs(cb.dosis-pb.dosis)+' frente al anterior)':'')),
+    tile('Días solo en la mínima',String(cw.min),delta(cw.min,lw>0?pw.min:null,0),'de '+cw.c+' días cumplidos',''),
+    tile('Sin recordatorio',cw.espont==null?'—':cw.espont+' %',delta(cw.espont,pw.espont,1),'de los días cumplidos','')));
+  D.append(el('div',{class:'cap',text:wl+'. Con pocos días planificados por semana, un solo día mueve mucho el porcentaje: el bloque de 14 días es más estable.'}));
+  /* cuadrícula de gráficos */
+  const G=el('div',{class:'grid'});
+  const panel=(t,body)=>el('section',{class:'pn'},el('h4',{text:t}),body);
+  const cv=id=>el('div',{class:'cw'},el('canvas',{id,role:'img','aria-label':id}));
+  G.append(panel('Cumplimiento por bloque de 14 días',cv('ch-bloques')));
+  G.append(panel('Dosis semana a semana',cv('ch-dosis')));
+  const lg=el('div',{class:'lg'},...[['comp','Completo'],['min','Solo la mínima'],['no','No cumplido o sin registro']].map(([k,t])=>el('span',null,el('i',{style:'background:'+C[k]}),t)));
+  G.append(panel('Semana a semana (días planificados)',el('div',{class:'col'},lg,cv('ch-semanas'))));
+  /* calendario */
+  const cal=el('div',{class:'cal'});cal.append(el('span'),...DIAS.map(d=>el('span',{class:'cd',text:d})));
+  const ws=[...new Set(days.map(d=>weekStart(d.f)))].sort();
+  ws.forEach(w=>{cal.append(el('span',{class:'cw2',text:fmt(w).replace(/^\S+\s/,'')}));for(let i=0;i<7;i++){const f=addDays(w,i),d=days.find(x=>x.f===f);
+    cal.append(el('span',{class:'cc'+(d?' '+d.st:' out'),title:d?fmt(f):''}))}});
+  const lg2=el('div',{class:'lg'},...[['comp','Completo'],['min','Mínima'],['no','No salió'],['sin','Sin registro'],['libre','Libre']].map(([k,t])=>el('span',null,el('i',{style:'background:'+C[k]+(k==='libre'?';outline:1px dashed #B9B0A0':'')}),t)));
+  G.append(panel('Cada día',el('div',{class:'col'},cal,lg2)));
+  G.append(panel('¿Qué pasó cuando no salió completo?',cv('ch-motivos')));
+  G.append(panel('¿Qué protecciones fallaron?',cv('ch-pokas')));
+  D.append(G);
+  D.append(el('footer',{class:'sf',text:'Del talento al hábito · Panel MOTOR · Diseñado por Josselyn Pérez · Datos hasta el '+fmt(fin)+' · Cumplimiento = días con al menos la mínima ÷ días planificados. Dosis = valor medio en días cumplidos ÷ objetivo.'}));
+  fitSheet();
+  /* datos de los gráficos */
+  const base={scales:{x:{ticks:{color:C.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:C.tick,font:{size:10}},grid:{color:C.grid}}},plugins:{legend:{display:false}}};
+  const bandas={id:'bandas',beforeDraw(ch){const{ctx,chartArea:a,scales:{y}}=ch;[[ver,100,'rgba(107,121,73,0.18)'],[roj,ver,'rgba(219,200,165,0.40)'],[0,roj,'rgba(165,89,66,0.16)']].forEach(([lo,hi,col])=>{ctx.fillStyle=col;ctx.fillRect(a.left,y.getPixelForValue(hi),a.right-a.left,y.getPixelForValue(lo)-y.getPixelForValue(hi))})}};
+  const etiquetas={id:'etq',afterDatasetsDraw(ch){const{ctx}=ch;ch.data.datasets.forEach((ds,i)=>{if(ds.type==='bar'&&ch.config.options.indexAxis!=='y')return;ch.getDatasetMeta(i).data.forEach((p,j)=>{const v=ds.data[j];if(v==null)return;ctx.save();ctx.fillStyle=C.ink;ctx.font='600 10px "Nunito Sans",sans-serif';
+    if(ch.config.options.indexAxis==='y'){ctx.textAlign='left';ctx.fillText(String(v),p.x+4,p.y+3)}else{ctx.textAlign='center';ctx.fillText(v+' %',p.x,p.y-9)}ctx.restore()})})}};
+  const bl=B.map(b=>'Días '+(b*14+1)+'–'+(b*14+14));
+  chart('ch-bloques',{type:'line',data:{labels:bl,datasets:[{data:B.map(b=>sb(b).cumpl),borderColor:C.noche,backgroundColor:C.noche,borderWidth:2,pointRadius:5,pointBorderColor:'#fff',pointBorderWidth:2}]},
+    options:Object.assign({},base,{layout:{padding:{top:14,right:8}},scales:{x:base.scales.x,y:{min:0,max:100,ticks:{color:C.tick,font:{size:10},stepSize:20,callback:v=>v+' %'},grid:{color:C.grid}}}}),plugins:[bandas,etiquetas]});
+  const dz=W.map(w=>sw(w).dosis),dmax=Math.max(110,...dz.filter(v=>v!=null).map(v=>v+15));
+  const objLine={id:'obj',afterDraw(ch){const{ctx,chartArea:a,scales:{y}}=ch;const py=y.getPixelForValue(100);ctx.save();ctx.setLineDash([5,4]);ctx.strokeStyle='#8E8A80';ctx.beginPath();ctx.moveTo(a.left,py);ctx.lineTo(a.right,py);ctx.stroke();ctx.fillStyle='#6E6B64';ctx.font='10px "Nunito Sans",sans-serif';ctx.textAlign='left';ctx.fillText('Objetivo',a.left+4,py-4);ctx.restore()}};
+  chart('ch-dosis',{type:'line',data:{labels:W.map(w=>'Sem '+(w+1)),datasets:[{data:dz,borderColor:C.comp,backgroundColor:'rgba(107,121,73,0.12)',fill:true,borderWidth:2,pointRadius:4,pointBackgroundColor:C.comp,pointBorderColor:'#fff',pointBorderWidth:2,spanGaps:true,tension:0.2}]},
+    options:Object.assign({},base,{layout:{padding:{top:14,right:8}},scales:{x:base.scales.x,y:{min:0,max:Math.ceil(dmax/10)*10,ticks:{color:C.tick,font:{size:10},callback:v=>v+' %'},grid:{color:C.grid}}}}),plugins:[objLine,etiquetas]});
+  const S=W.map(sw);
+  chart('ch-semanas',{type:'bar',data:{labels:W.map(w=>'Sem '+(w+1)),datasets:[['comp','Completo'],['min','Solo la mínima'],['no','No cumplido']].map(([k,t])=>({type:'bar',label:t,data:S.map(s=>s[k]),backgroundColor:C[k],borderColor:'#FFFFFF',borderWidth:{top:2},maxBarThickness:26}))},
+    options:Object.assign({},base,{scales:{x:Object.assign({stacked:true},base.scales.x),y:{stacked:true,ticks:{color:C.tick,font:{size:10},stepSize:1},grid:{color:C.grid}}}})});
+  const fall=days.filter(d=>d.r&&d.r.motivo);const mc={};Object.keys(MOT).forEach(k=>mc[k]=0);fall.forEach(d=>{const k=MOT[d.r.motivo]?d.r.motivo:'otra';mc[k]++});
+  const hb=(id,labels,data,color)=>chart(id,{type:'bar',data:{labels,datasets:[{data,backgroundColor:color,borderRadius:4,maxBarThickness:18}]},
+    options:Object.assign({},base,{indexAxis:'y',layout:{padding:{right:18}},scales:{x:{beginAtZero:true,ticks:{color:C.tick,font:{size:10},stepSize:1,precision:0},grid:{color:C.grid}},y:{ticks:{color:C.ink,font:{size:10}},grid:{display:false}}}}),plugins:[etiquetas]});
+  hb('ch-motivos',Object.keys(MOT).map(k=>MOT[k]),Object.keys(MOT).map(k=>mc[k]),C.no);
+  const pk=(h.pokayokes||'').split(' | ').filter(Boolean),pc={};pk.forEach(p=>pc[p]=0);
+  days.forEach(d=>{if(d.r&&d.r.pokayoke){const k=d.r.pokayoke;pc[k]=(pc[k]||0)+1}});
+  const pkl=Object.keys(pc);
+  if(pkl.length)hb('ch-pokas',pkl.map(p=>{const i=p.indexOf(': ');return i<0?[shortTxt(p,24)]:[p.slice(0,i),shortTxt(p.slice(i+2),24)]}),pkl.map(p=>pc[p]),C.arena);
+  else{const c=document.getElementById('ch-pokas');c.parentNode.replaceChild(el('p',{class:'muted',text:'No hay poka-yokes en el plan de este hábito.'}),c)}
+}
+/* ajuste a pantalla, modo presentación, PDF e imagen */
+function fitSheet(){const s=$('sheet'),w=$('sheet-wrap');if(!s||!w)return;const pres=document.body.classList.contains('present');
+  const k=pres?Math.min(1.5,(innerWidth-32)/1040,(innerHeight-110)/720):Math.min(1,w.clientWidth/1040);
+  s.style.transform='scale('+k+')';w.style.height=(720*k)+'px'}
+addEventListener('resize',fitSheet);
+$('pa-hab').addEventListener('change',renderDash);
+$('pa-present').addEventListener('click',()=>{document.body.classList.add('present');fitSheet()});
+$('pa-salir').addEventListener('click',()=>{document.body.classList.remove('present');fitSheet()});
+addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('present')){document.body.classList.remove('present');fitSheet()}});
+$('pa-pdf').addEventListener('click',()=>window.print());
+$('pa-png').addEventListener('click',async()=>{
+  if(typeof html2canvas==='undefined'){$('pa-toast2').textContent='No cargó la herramienta de imagen. Usa «Descargar PDF».';return}
+  const s=$('sheet'),t=s.style.transform;s.style.transform='none';
+  try{const c=await html2canvas(s,{scale:2,backgroundColor:'#FAF7F2'});const a=document.createElement('a');
+    a.href=c.toDataURL('image/png');a.download='tablero-'+($('pa-part').value||'participante').toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+today()+'.png';a.click()}
+  finally{s.style.transform=t;fitSheet()}
+});
+
 function kpi(v,l){return el('div',{class:'kpi'},el('b',{text:v}),el('span',{text:l}))}
 
 /* ---------- inicio ---------- */

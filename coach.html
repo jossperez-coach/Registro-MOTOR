@@ -277,7 +277,7 @@ const DIAS=['L','M','X','J','V','S','D'];
 const PREGUNTA_FORTALEZAS=false; /* piloto: sin pregunta semanal de fortalezas */
 const PTIPOS=['Entorno','Señal','Compromiso','Preparación'];
 const MOTIVOS=[['senal','No apareció la señal o lo olvidé'],['capacidad','Era difícil o no tuve tiempo'],['motivacion','No tenía ganas u otra prioridad'],['pokayoke','Una protección falló'],['otra','Otra razón']];
-const SRBAI=['Lo hago automáticamente.','Lo hago sin tener conscientemente que recordarlo.','Lo hago sin pensarlo.','Comienzo a hacerlo antes de darme cuenta de que lo estoy haciendo.'];
+const SRBAI=['Lo hago automáticamente.','Lo hago sin tener conscientemente que recordarlo.','Lo hago sin pensarlo.','Comienzo a hacerlo antes de que me dé cuenta de que lo estoy haciendo.'];
 const $=id=>document.getElementById(id);
 const el=(t,a,...kids)=>{const e=document.createElement(t);if(a)for(const k in a){if(k==='class')e.className=a[k];else if(k==='text')e.textContent=a[k];else if(k.startsWith('on'))e.addEventListener(k.slice(2),a[k]);else e.setAttribute(k,a[k])}kids.forEach(c=>c!=null&&e.append(c));return e};
 

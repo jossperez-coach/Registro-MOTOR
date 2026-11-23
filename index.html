@@ -226,7 +226,7 @@ th{background:var(--soft);font-weight:700}
 <script>
 (function(){
 const KEY='motor-registro-v2', OLDKEY='motor-registro-v1', COACH='+593 992936687', MAXH=3;
-const COLS=['tipo','participante','habito_id','habito','tipo_habito','fecha','planificado','cumplio_habito','cumplio_minima','valor','objetivo','minima','unidad','sin_recordatorio','motivo','pokayoke','nota','srbai_1','srbai_2','srbai_3','srbai_4','srbai_prom','fortaleza','hito','hito_fecha','hito_alcanzado','dias_plan','inicio','verde','rojo','pokayokes','activo','registrado_en'];
+const COLS=['tipo','participante','habito_id','habito','tipo_habito','fecha','planificado','cumplio_habito','cumplio_minima','valor','objetivo','minima','unidad','sin_recordatorio','motivo','pokayoke','nota','srbai_1','srbai_2','srbai_3','srbai_4','srbai_prom','fortaleza','hito','hito_fecha','hito_alcanzado','dias_plan','inicio','verde','rojo','pokayokes','activo','para_que','senales','senal_n','senal_valor','registrado_en'];
 const DIAS=['L','M','X','J','V','S','D'];
 const PREGUNTA_FORTALEZAS=false; /* piloto: sin pregunta semanal de fortalezas */
 const PTIPOS=['Entorno','Señal','Compromiso','Preparación'];
@@ -247,7 +247,7 @@ const fmt=s=>parse(s).toLocaleDateString('es-EC',{weekday:'short',day:'numeric',
 const diffDays=(a,b)=>Math.round((parse(b)-parse(a))/864e5);
 
 /* ---------- estado ---------- */
-let S={perfil:{nombre:'',hora:'20:00',coach:COACH,fortalezas:['','','','',''],diaFort:4},habitos:[],entries:{},notas:{},srbai:[],fort:{}};
+let S={perfil:{nombre:'',hora:'20:00',coach:COACH,fortalezas:['','','','',''],diaFort:4},habitos:[],entries:{},notas:{},srbai:[],fort:{},senales:{}};
 function load(){
   try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s&&typeof s==='object'){S=Object.assign(S,s);return}}catch(e){}
   try{const o=JSON.parse(localStorage.getItem(OLDKEY)||'null');if(o&&o.config){
@@ -264,6 +264,7 @@ const activos=()=>S.habitos.filter(h=>h.activo);
 const hab=id=>S.habitos.find(h=>h.id===id);
 const planned=(h,f)=>!!h.dias[wd(f)]&&f>=h.inicio;
 
+function leerMedidas(t){try{const a=JSON.parse(t||'[]');return Array.isArray(a)?a.slice(0,2):[]}catch(e){return[]}}
 /* ---------- CSV ---------- */
 function esc(v){v=v==null?'':String(v);return /[",\n;]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
 function toCSV(rows){return [COLS.join(',')].concat(rows.map(r=>COLS.map(c=>esc(r[c])).join(','))).join('\n')}
@@ -284,11 +285,13 @@ function myRows(desde){
   const n=S.perfil.nombre,rows=[];
   S.habitos.forEach(h=>rows.push({tipo:'plan',participante:n,habito_id:h.id,habito:h.nombre,tipo_habito:h.tipo,objetivo:h.objetivo,minima:h.minima,unidad:h.unidad,
     dias_plan:h.dias.map((v,i)=>v?DIAS[i]:'').filter(Boolean).join(''),inicio:h.inicio,verde:h.verde,rojo:h.rojo,
-    pokayokes:h.pokas.map(p=>p.tipo+': '+p.texto).join(' | '),hito:h.hito.texto,hito_fecha:h.hito.fecha,activo:h.activo?'si':'no',registrado_en:h.editado||''}));
+    pokayokes:h.pokas.map(p=>p.tipo+': '+p.texto).join(' | '),hito:h.hito.texto,hito_fecha:h.hito.fecha,activo:h.activo?'si':'no',para_que:h.paraque||'',senales:(h.medidas&&h.medidas.length)?JSON.stringify(h.medidas):'',registrado_en:h.editado||''}));
   Object.values(S.entries).filter(e=>!desde||e.fecha>=desde).sort((a,b)=>(a.fecha+a.habito_id).localeCompare(b.fecha+b.habito_id)).forEach(e=>{const h=hab(e.habito_id)||{};
     rows.push({tipo:'diario',participante:n,habito_id:e.habito_id,habito:h.nombre||'',fecha:e.fecha,planificado:e.planificado,cumplio_habito:e.cumplio_habito,cumplio_minima:e.cumplio_minima,
       valor:e.valor,sin_recordatorio:e.sin_recordatorio,motivo:e.motivo,pokayoke:e.pokayoke,registrado_en:e.registrado_en})});
   Object.keys(S.notas).filter(f=>!desde||f>=desde).sort().forEach(f=>rows.push({tipo:'nota',participante:n,fecha:f,nota:S.notas[f]}));
+  Object.values(S.senales||{}).filter(x=>!desde||x.fecha>=desde).sort((a,b)=>(a.fecha+a.habito_id+a.n).localeCompare(b.fecha+b.habito_id+b.n)).forEach(x=>{const h=hab(x.habito_id)||{};
+    rows.push({tipo:'senal',participante:n,habito_id:x.habito_id,habito:h.nombre||'',fecha:x.fecha,senal_n:x.n,senal_valor:x.valor,registrado_en:x.registrado_en})});
   S.srbai.filter(s=>!desde||s.fecha>=desde).forEach(s=>{const h=hab(s.habito_id)||{};rows.push({tipo:'srbai',participante:n,habito_id:s.habito_id,habito:h.nombre||'',fecha:s.fecha,srbai_1:s.items[0],srbai_2:s.items[1],srbai_3:s.items[2],srbai_4:s.items[3],srbai_prom:s.prom,registrado_en:s.registrado_en})});
   Object.keys(S.fort).filter(w=>!desde||S.fort[w].fecha>=desde).forEach(w=>rows.push({tipo:'fortaleza',participante:n,fecha:S.fort[w].fecha,fortaleza:S.fort[w].fortaleza,registrado_en:S.fort[w].registrado_en}));
   S.habitos.filter(h=>h.hito&&h.hito.respondido).forEach(h=>rows.push({tipo:'hito',participante:n,habito_id:h.id,habito:h.nombre,fecha:h.hito.respondido,hito:h.hito.texto,hito_fecha:h.hito.fecha,hito_alcanzado:h.hito.alcanzado,fortaleza:h.hito.fortaleza,registrado_en:h.hito.respondido}));
@@ -354,12 +357,12 @@ function renderHabList(){
       el('button',{class:'btn sec small',text:h.activo?'Archivar':'Reactivar',onclick:()=>{
         if(!h.activo&&activos().length>=MAXH){$('p-toast').textContent='Ya tienes 3 hábitos activos. Archiva uno primero.';return}
         h.activo=!h.activo;h.editado=new Date().toISOString();save();renderHabList();$('nav').hidden=!S.perfil.nombre||!activos().length}}));
-    L.append(el('div',{class:'hab'},top,el('p',{class:'muted',text:'Días: '+dias+' · desde '+fmt(h.inicio)+(h.pokas.length?' · '+h.pokas.length+' poka-yoke'+(h.pokas.length>1?'s':''):'')+(h.hito&&h.hito.texto?' · hito: '+h.hito.texto+' ('+h.hito.fecha+')':'')}),acts));
+    L.append(el('div',{class:'hab'},top,h.paraque?el('p',{class:'muted',text:'Mi para qué: '+h.paraque+((h.medidas||[]).length?' · '+h.medidas.length+' señal'+(h.medidas.length>1?'es':''):'')}):'',el('p',{class:'muted',text:'Días: '+dias+' · desde '+fmt(h.inicio)+(h.pokas.length?' · '+h.pokas.length+' poka-yoke'+(h.pokas.length>1?'s':''):'')+(h.hito&&h.hito.texto?' · hito: '+h.hito.texto+' ('+h.hito.fecha+')':'')}),acts));
   });
 }
 $('h-nuevo').addEventListener('click',()=>openEditor(null));
 function openEditor(id){
-  const h=id?hab(id):{id:'h'+Date.now(),tipo:S.habitos.some(x=>x.tipo==='micro'&&x.activo)?'meta':'micro',nombre:'',objetivo:'',unidad:'',minima:'',senal:'',dias:[1,1,1,1,1,0,0],inicio:today(),verde:80,rojo:40,pokas:[],hito:{texto:'',fecha:'',alcanzado:'',fortaleza:'',respondido:''},activo:true};
+  const h=id?hab(id):{id:'h'+Date.now(),tipo:S.habitos.some(x=>x.tipo==='micro'&&x.activo)?'meta':'micro',nombre:'',objetivo:'',unidad:'',minima:'',senal:'',dias:[1,1,1,1,1,0,0],inicio:today(),verde:80,rojo:40,pokas:[],hito:{texto:'',fecha:'',alcanzado:'',fortaleza:'',respondido:''},activo:true,paraque:'',medidas:[]};
   const E=$('h-editor');E.innerHTML='';E.hidden=false;$('h-nuevo').hidden=true;
   const f=el('form',{class:'sub'});
   const inp=(lab,key,attrs={})=>{const i=el('input',Object.assign({id:'e-'+key,value:h[key]??''},attrs));return [el('label',null,lab,i),i]};
@@ -386,6 +389,27 @@ function openEditor(id){
     const x=el('button',{type:'button',class:'btn sec small','aria-label':'Quitar poka-yoke '+(i+1),text:'Quitar'});x.addEventListener('click',()=>{pk.splice(i,1);drawPk()});
     pkBox.append(el('div',{class:'inline'},s,t,x))});addPk.disabled=pk.length>=5}
   addPk.addEventListener('click',()=>{pk.push({tipo:'Entorno',texto:''});drawPk()});drawPk();
+  const pq=el('textarea',{id:'e-paraque',rows:'2',placeholder:'Ej.: Dormir mejor y despertar con más energía'});pq.value=h.paraque||'';
+  const md=(h.medidas||[]).map(m=>Object.assign({pregunta:'',tipo:'escala',bajo:'',alto:'',unidad:'',siguiente:false},m));
+  const mdBox=el('div',{style:'display:flex;flex-direction:column;gap:10px'});
+  const addMd=el('button',{type:'button',class:'btn sec small',text:'Agregar señal'});
+  function drawMd(){mdBox.innerHTML='';md.forEach((m,i)=>{
+    const q=el('input',{value:m.pregunta,placeholder:'Ej.: ¿Con cuánta energía despertaste?','aria-label':'Pregunta de la señal '+(i+1)});q.addEventListener('input',()=>m.pregunta=q.value);
+    const t=el('select',{'aria-label':'Tipo de respuesta '+(i+1)},el('option',{value:'escala',text:'Escala del 1 al 5'}),el('option',{value:'sino',text:'Sí o no'}),el('option',{value:'numero',text:'Número'}));t.value=m.tipo;
+    const b=el('input',{value:m.bajo,placeholder:'1 = (ej.: agotado)','aria-label':'Qué significa 1'});b.addEventListener('input',()=>m.bajo=b.value);
+    const a=el('input',{value:m.alto,placeholder:'5 = (ej.: con energía)','aria-label':'Qué significa 5'});a.addEventListener('input',()=>m.alto=a.value);
+    const u=el('input',{value:m.unidad,placeholder:'Unidad (ej.: horas)','aria-label':'Unidad'});u.addEventListener('input',()=>m.unidad=u.value);
+    const extra=el('div',{class:'row'});const drawX=()=>{extra.innerHTML='';if(t.value==='escala')extra.append(b,a);else if(t.value==='numero')extra.append(u)};
+    t.addEventListener('change',()=>{m.tipo=t.value;drawX()});drawX();
+    const sg=el('input',{type:'checkbox','aria-label':'Se responde al día siguiente',style:'width:auto;margin:0;flex:none'});sg.checked=!!m.siguiente;sg.addEventListener('change',()=>m.siguiente=sg.checked);
+    const x=el('button',{type:'button',class:'btn sec small',text:'Quitar','aria-label':'Quitar señal '+(i+1)});x.addEventListener('click',()=>{md.splice(i,1);drawMd()});
+    mdBox.append(el('div',{class:'sub',style:'display:flex;flex-direction:column;gap:6px'},el('p',{style:'font-weight:600;font-size:13px',text:'Señal '+(i+1)}),q,t,extra,
+      el('label',{style:'display:flex;flex-direction:row;align-items:center;gap:8px;font-size:13px'},sg,'Se responde al día siguiente (por ejemplo, cómo despertaste)'),x))});
+    addMd.disabled=md.length>=2}
+  addMd.addEventListener('click',()=>{md.push({pregunta:'',tipo:'escala',bajo:'',alto:'',unidad:'',siguiente:false});drawMd()});drawMd();
+  const pqBox=el('div',{style:'display:flex;flex-direction:column;gap:8px'},el('p',{style:'font-weight:600;font-size:14px',text:'Mi para qué'}),
+    el('label',null,'¿Para qué quieres este hábito?',pq),
+    el('p',{class:'muted',text:'Hasta 2 señales de que te está sirviendo. Se preguntan al registrar, en unos segundos.'}),mdBox,addMd);
   const hitoT=el('input',{id:'e-hito',value:h.hito.texto||'',placeholder:'Ej.: Correr 5 km sin parar'});
   const hitoF=el('input',{id:'e-hitof',type:'date',value:h.hito.fecha||''});
   const hitoBox=el('div',{class:'row'},el('label',null,'Hito vinculado',hitoT),el('label',null,'Fecha del hito',hitoF));
@@ -394,13 +418,14 @@ function openEditor(id){
   f.append(el('h3',{text:id?'Editar hábito':'Nuevo hábito'}),el('label',null,'Tipo',tipoSel),lNom,el('div',{class:'row'},lObj,lUni),el('div',{class:'row'},lMin,lSen),lIni,
     el('div',null,el('p',{style:'font-weight:600;font-size:14px;margin-bottom:6px',text:'Días planificados'}),diasBox),
     el('div',null,el('p',{style:'font-weight:600;font-size:14px;margin-bottom:6px',text:'Poka-yokes (entorno, señal, compromiso o preparación)'}),pkBox,addPk),
-    hitoBox,el('p',{style:'font-weight:600;font-size:14px',text:'Semáforo de cumplimiento (lo acuerdan en la sesión)'}),el('div',{class:'row'},lVer,lRoj),
+    pqBox,hitoBox,el('p',{style:'font-weight:600;font-size:14px',text:'Semáforo de cumplimiento (lo acuerdan en la sesión)'}),el('div',{class:'row'},lVer,lRoj),
     el('div',{class:'inline'},el('button',{class:'btn',type:'submit',text:'Guardar hábito'}),el('button',{type:'button',class:'btn sec',text:'Cancelar',onclick:closeEditor})),msg);
   f.addEventListener('submit',e=>{e.preventDefault();
     if(!dias.some(Boolean)){msg.textContent='Elige al menos un día.';return}
     if(!id&&activos().length>=MAXH){msg.textContent='Ya tienes 3 hábitos activos.';return}
     Object.assign(h,{tipo:tipoSel.value,nombre:iNom.value.trim(),objetivo:iObj.value,unidad:iUni.value.trim(),minima:iMin.value,senal:iSen.value.trim(),inicio:iIni.value||today(),
-      dias:dias.map(v=>v?1:0),verde:+iVer.value||80,rojo:+iRoj.value||40,pokas:pk.filter(p=>p.texto.trim()).map(p=>({tipo:p.tipo,texto:p.texto.trim()})),editado:new Date().toISOString()});
+      dias:dias.map(v=>v?1:0),verde:+iVer.value||80,rojo:+iRoj.value||40,pokas:pk.filter(p=>p.texto.trim()).map(p=>({tipo:p.tipo,texto:p.texto.trim()})),paraque:pq.value.trim(),
+      medidas:md.filter(m=>m.pregunta.trim()).slice(0,2).map(m=>({pregunta:m.pregunta.trim(),tipo:m.tipo,bajo:m.tipo==='escala'?m.bajo.trim():'',alto:m.tipo==='escala'?m.alto.trim():'',unidad:m.tipo==='numero'?m.unidad.trim():'',siguiente:!!m.siguiente})),editado:new Date().toISOString()});
     if(h.hito.texto!==hitoT.value.trim()||h.hito.fecha!==hitoF.value){h.hito={texto:hitoT.value.trim(),fecha:hitoF.value,alcanzado:'',fortaleza:'',respondido:''}}
     if(!id)S.habitos.push(h);save();closeEditor();renderHabList();
     $('p-toast').textContent='Hábito guardado.';$('nav').hidden=!S.perfil.nombre||!activos().length});
@@ -474,6 +499,7 @@ async function startChat(){
     }
     if(e.cumplio_minima==='si'){bot('¿Lo hiciste sin que nada te lo recordara?');e.sin_recordatorio=await choose([['Sí, solo/a','si'],['Necesité recordatorio','no']])}
     e.registrado_en=new Date().toISOString();S.entries[f+'|'+h.id]=e;save();registrados++;
+    await askSenales(h,f,my);
   }
   if(my!==runId)return;
   bot('¿Algo que quieras anotar del día? (contexto, cómo te sentiste…)');
@@ -506,6 +532,22 @@ async function startChat(){
   if(my!==runId)return;
   bot(registrados?'Registrado. Nos vemos mañana.':'Listo. Disfruta tu día libre.');
   choose([['Ver mis días','dias',true]]).then(v=>show(v));
+}
+async function askSenales(h,f,my){
+  const ms=(h.medidas||[]).filter(m=>m&&m.pregunta);if(!ms.length)return;S.senales=S.senales||{};let intro=false;
+  for(let i=0;i<ms.length;i++){
+    if(my!==runId)return;const m=ms[i];let target=f,pre='';
+    if(m.siguiente){
+      if(dayK===1){target=f;pre='Esta mañana, al despertar: '}
+      else{target=addDays(f,-1);pre='Sobre esta mañana: ';if(target<h.inicio||S.senales[target+'|'+h.id+'|'+(i+1)])continue}
+    }
+    if(!intro){tag('Mi para qué'+(h.paraque?' · '+h.paraque:''));intro=true}
+    bot(pre+m.pregunta);let v;
+    if(m.tipo==='sino')v=await choose([['Sí','si'],['No','no']]);
+    else if(m.tipo==='numero')v=await askNumber('',m.unidad||'');
+    else v=await choose([['1'+(m.bajo?' · '+m.bajo:''),'1'],['2','2'],['3','3'],['4','4'],['5'+(m.alto?' · '+m.alto:''),'5']]);
+    S.senales[target+'|'+h.id+'|'+(i+1)]={habito_id:h.id,fecha:target,n:i+1,valor:v,registrado_en:new Date().toISOString()};save();
+  }
 }
 function srbaiDue(h,f){
   const dues=[];for(let n=42;addDays(h.inicio,n)<=f;n+=28)dues.push(addDays(h.inicio,n));
@@ -560,9 +602,10 @@ $('e-restaurar').addEventListener('change',async e=>{const file=e.target.files[0
     if(o.tipo==='plan'&&!hab(o.habito_id)){S.habitos.push({id:o.habito_id,tipo:o.tipo_habito||'micro',nombre:o.habito,objetivo:o.objetivo,unidad:o.unidad,minima:o.minima,senal:'',
       dias:DIAS.map(d=>(o.dias_plan||'LMXJVSD').includes(d)?1:0),inicio:o.inicio||today(),verde:+o.verde||80,rojo:+o.rojo||40,
       pokas:(o.pokayokes||'').split(' | ').filter(Boolean).map(s=>{const i=s.indexOf(': ');return{tipo:s.slice(0,i),texto:s.slice(i+2)}}),
-      hito:{texto:o.hito||'',fecha:o.hito_fecha||'',alcanzado:'',fortaleza:'',respondido:''},activo:o.activo!=='no'});if(!S.perfil.nombre)S.perfil.nombre=o.participante}
+      hito:{texto:o.hito||'',fecha:o.hito_fecha||'',alcanzado:'',fortaleza:'',respondido:''},activo:o.activo!=='no',paraque:o.para_que||'',medidas:leerMedidas(o.senales)});if(!S.perfil.nombre)S.perfil.nombre=o.participante}
     if(o.tipo==='diario'){const k=o.fecha+'|'+o.habito_id;if(!S.entries[k]){S.entries[k]={habito_id:o.habito_id,fecha:o.fecha,planificado:o.planificado,cumplio_habito:o.cumplio_habito,cumplio_minima:o.cumplio_minima,valor:o.valor,sin_recordatorio:o.sin_recordatorio,motivo:o.motivo,pokayoke:o.pokayoke,registrado_en:o.registrado_en};n++}}
     if(o.tipo==='nota'&&!S.notas[o.fecha])S.notas[o.fecha]=o.nota;
+    if(o.tipo==='senal'&&o.senal_n){S.senales=S.senales||{};const k=o.fecha+'|'+o.habito_id+'|'+o.senal_n;if(!S.senales[k])S.senales[k]={habito_id:o.habito_id,fecha:o.fecha,n:+o.senal_n,valor:o.senal_valor,registrado_en:o.registrado_en}}
   });save();$('e-toast').textContent=n+' registro'+(n===1?'':'s')+' restaurado'+(n===1?'':'s')+'.'}});
 
 /* ---------- Excel ---------- */

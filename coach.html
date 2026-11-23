@@ -108,7 +108,8 @@ body.present .no-present,body.present header:not(.sh),body.present nav,body.pres
 body.present .only-present{display:inline-block;margin:0 0 10px}
 body.present .wrap{max-width:none;padding:12px}
 #sheet-wrap{position:relative;overflow:hidden}
-#sheet{width:1040px;height:720px;transform-origin:0 0;background:#FAF7F2;color:#1E1E1C;padding:16px 20px;box-sizing:border-box;display:flex;flex-direction:column;gap:8px;font-family:"Nunito Sans",system-ui,sans-serif;border:1px solid #E6E0D5;border-radius:10px}
+#sheet{width:1040px;transform-origin:0 0;display:flex;flex-direction:column;gap:16px}
+#sheet .page{width:1040px;height:720px;flex:none;background:#FAF7F2;color:#1E1E1C;padding:16px 20px;box-sizing:border-box;display:flex;flex-direction:column;gap:8px;font-family:"Nunito Sans",system-ui,sans-serif;border:1px solid #E6E0D5;border-radius:10px}
 #sheet .sh{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
 #sheet .sk{font-size:9.5px;font-weight:700;letter-spacing:.06em;color:#6B7949}
 #sheet .st{font-family:Lora,Georgia,serif;font-size:21px;font-weight:600;line-height:1.15}
@@ -130,7 +131,7 @@ body.present .wrap{max-width:none;padding:12px}
 #sheet .lg{display:flex;flex-wrap:wrap;gap:8px;font-size:9.5px;color:#55534E}#sheet .lg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:3px;vertical-align:-1px}
 #sheet .cal{display:grid;grid-template-columns:44px repeat(7,1fr);gap:3px;font-size:9.5px;align-content:start;flex:1}
 #sheet .cd{text-align:center;color:#6E6B64;font-weight:700}#sheet .cw2{color:#6E6B64;white-space:nowrap}
-#sheet .cc{height:16px;border-radius:3px}#sheet .cc.comp{background:#6B7949}#sheet .cc.min{background:#B3BC8E}#sheet .cc.no{background:#A55942}#sheet .cc.sin{background:#D8CFC0}#sheet .cc.libre{background:#EFE9DE;outline:1px dashed #B9B0A0;outline-offset:-1px}#sheet .cc.extra{background:#6B7949;opacity:.55}#sheet .cc.out{background:transparent}
+#sheet .cc{min-height:18px;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;color:#1E1E1C}#sheet .cc b{font-size:9px;font-weight:700;opacity:.7}#sheet .cc i{font-style:normal;font-size:12px;font-weight:700}#sheet .cc.comp,#sheet .cc.no,#sheet .cc.extra{color:#FAF7F2}#sheet .cc.comp{background:#6B7949}#sheet .cc.min{background:#B3BC8E}#sheet .cc.no{background:#A55942}#sheet .cc.sin{background:#D8CFC0}#sheet .cc.libre{background:#EFE9DE;outline:1px dashed #B9B0A0;outline-offset:-1px}#sheet .cc.extra{background:#6B7949;opacity:.55}#sheet .cc.out{background:transparent}
 #sheet .sf{font-size:8.5px;color:#8E8A80}
 @media print{@page{size:A4 landscape;margin:8mm}
  html,body{margin:0!important;padding:0!important;background:#fff!important}
@@ -140,7 +141,10 @@ body.present .wrap{max-width:none;padding:12px}
  #v-panel > .card,#pa-out > .card,#pa-salir,#pa-dash,.toast{display:none!important}
  #v-panel,#pa-out{display:block!important;margin:0!important;padding:0!important}
  #sheet-wrap{height:auto!important;overflow:visible!important}
- #sheet{transform:none!important;border:none;page-break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+ #sheet{transform:none!important;border:none;page-break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ #sheet{gap:0!important}
+ #sheet .page{border:none;page-break-after:always;break-after:page}
+ #sheet .page:last-child{page-break-after:auto;break-after:auto}}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Lora:wght@600&family=Nunito+Sans:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
@@ -273,7 +277,7 @@ body.present .wrap{max-width:none;padding:12px}
 <script>
 (function(){
 const KEY='motor-registro-v2', OLDKEY='motor-registro-v1', COACH='+593 992936687', MAXH=3;
-const COLS=['tipo','participante','habito_id','habito','tipo_habito','fecha','planificado','cumplio_habito','cumplio_minima','valor','objetivo','minima','unidad','sin_recordatorio','motivo','pokayoke','nota','srbai_1','srbai_2','srbai_3','srbai_4','srbai_prom','fortaleza','hito','hito_fecha','hito_alcanzado','dias_plan','inicio','verde','rojo','pokayokes','activo','registrado_en'];
+const COLS=['tipo','participante','habito_id','habito','tipo_habito','fecha','planificado','cumplio_habito','cumplio_minima','valor','objetivo','minima','unidad','sin_recordatorio','motivo','pokayoke','nota','srbai_1','srbai_2','srbai_3','srbai_4','srbai_prom','fortaleza','hito','hito_fecha','hito_alcanzado','dias_plan','inicio','verde','rojo','pokayokes','activo','para_que','senales','senal_n','senal_valor','registrado_en'];
 const DIAS=['L','M','X','J','V','S','D'];
 const PREGUNTA_FORTALEZAS=false; /* piloto: sin pregunta semanal de fortalezas */
 const PTIPOS=['Entorno','Señal','Compromiso','Preparación'];
@@ -633,7 +637,7 @@ async function readFileRows(f){
 
 /* ---------- PANEL DE LA COACH ---------- */
 let pool={};
-function rowKey(o){return o.tipo==='plan'?['plan',o.participante,o.habito_id].join('|'):o.tipo==='fortaleza'?['fortaleza',o.participante,weekStart(o.fecha)].join('|'):[o.tipo,o.participante,o.habito_id,o.fecha].join('|')}
+function rowKey(o){return o.tipo==='senal'?['senal',o.participante,o.habito_id,o.fecha,o.senal_n].join('|'):o.tipo==='plan'?['plan',o.participante,o.habito_id].join('|'):o.tipo==='fortaleza'?['fortaleza',o.participante,weekStart(o.fecha)].join('|'):[o.tipo,o.participante,o.habito_id,o.fecha].join('|')}
 function addRows(rows){let n=0;rows.forEach(o=>{if(!o.participante||(!o.fecha&&o.tipo!=='plan'))return;const k=rowKey(o);
   if(!pool[k]||(o.registrado_en||'')>=(pool[k].registrado_en||'')){if(!pool[k])n++;pool[k]=o}});return n}
 $('pa-files').addEventListener('change',async e=>{let n=0;for(const f of e.target.files){try{n+=addRows(await readFileRows(f))}catch(err){$('pa-toast').textContent='No pude leer '+f.name+'.'}}$('pa-toast').textContent=n+' fila'+(n===1?'':'s')+' nueva'+(n===1?'':'s')+'.';e.target.value='';renderPanel()});
@@ -645,7 +649,7 @@ $('pa-descargar').addEventListener('click',()=>{
   const leeme=[['Libro maestro del Registro MOTOR · generado el '+today()],[''],['Registros: todo lo recibido, sin duplicados. Es la hoja que el panel vuelve a leer: no cambies sus columnas.'],
     ['Resumen: indicadores por participante y hábito desde el inicio de cada hábito hasta el último dato recibido.'],[''],
     ['Cumplimiento = días con al menos la conducta mínima ÷ días registrados. Un día planificado sin registro no tiene dato: no cuenta como no cumplido.'],['Registro = días registrados ÷ días planificados. Se mira aparte: registrar no es parte del hábito.'],
-    ['Dosis = valor medio en los días cumplidos ÷ valor objetivo.'],['Ejecución espontánea = días sin recordatorio ÷ días cumplidos.'],[''],
+    ['Dosis = valor medio en los días cumplidos ÷ valor objetivo.'],['Mi para qué: hasta 2 señales por hábito (filas «senal»). El panel compara su promedio en días con hábito completo frente a otros días; es un dato subjetivo, no prueba que el hábito lo cause.'],['Ejecución espontánea = días sin recordatorio ÷ días cumplidos.'],[''],
     ['Para seguir: la próxima vez sube este libro en el panel junto con los archivos o mensajes nuevos, y descarga el libro actualizado.']];
   const x=toXlsx([['Léeme',leeme,null,true],['Resumen',resumenRows()],['Registros',regs,COLS]]);
   if(!x){$('pa-toast').textContent='No se pudo preparar el Excel (no cargó la librería). Revisa tu conexión y recarga la página.';return}
@@ -683,7 +687,7 @@ function resumenRows(){
       out.push({'Participante':P,'Hábito':h.habito,'Tipo':h.tipo_habito==='meta'?'Meta':'Micro hábito','Desde':m.ini,'Hasta':fechas[fechas.length-1],
         'Días planificados':m.plannedDays.length,'Días registrados':m.regP.length,'Registro %':m.registroPct??'','Días cumplidos (al menos la mínima)':m.cumpl.length,'Cumplimiento %':m.cumplPct??'','Semáforo':zone(m.cumplPct,h)[1],
         'Días completos':m.comp.length,'Días solo mínima':m.soloMin,'Dosis %':m.dosis??'','Ejecución espontánea %':m.espont??'','Días planificados sin registro':m.sinReg,
-        'Días libres en que igual lo hizo':m.extra,'Último SRBAI':sr?sr.srbai_prom:'','Fecha último SRBAI':sr?sr.fecha:'','Hito':h.hito||'','Hito alcanzado':hi?hi.hito_alcanzado:''})});
+        'Días libres en que igual lo hizo':m.extra,'Mi para qué':h.para_que||'','Último SRBAI':sr?sr.srbai_prom:'','Fecha último SRBAI':sr?sr.fecha:'','Hito':h.hito||'','Hito alcanzado':hi?hi.hito_alcanzado:''})});
   });
   return out;
 }
@@ -734,7 +738,8 @@ function renderHabSel(){
 }
 function renderDash(){
   killCharts();
-  const P=$('pa-part').value,rows=Object.values(pool).filter(r=>r.participante===P),D=$('sheet');D.innerHTML='';
+  const P=$('pa-part').value,rows=Object.values(pool).filter(r=>r.participante===P),SH=$('sheet');SH.innerHTML='';
+  const D=el('div',{class:'page'}),D2=el('div',{class:'page'});SH.append(D);
   const plans=plansFor(rows),h=plans[$('pa-hab').value]||Object.values(plans)[0];
   const diarios=rows.filter(r=>r.tipo==='diario');
   const fechas=diarios.filter(r=>r.habito_id===(h&&h.habito_id)).map(r=>r.fecha).sort();
@@ -760,6 +765,7 @@ function renderDash(){
     el('div',{class:'meter'},el('i',{style:'width:'+Math.max(0,Math.min(100,(v-1)/4*100))+'%'})),el('b',{text:String(v).replace('.',',')+' / 5'})))}
   D.append(el('header',{class:'sh'},el('div',null,el('div',{class:'sk',text:'PANEL MOTOR · '+P}),el('div',{class:'st',text:h.habito||'Micro hábito'}),
     h._sinPlan?el('div',{class:'ss',style:'color:#A55942;font-weight:700',text:'Atención: los archivos no traen el plan de este hábito, así que uso umbrales por defecto (80 % y 40 %). Pide a la persona que te reenvíe su registro completo.'}):'',
+    h.para_que?el('div',{class:'ss',style:'color:#2D3F56;font-weight:700',text:'Mi para qué: '+h.para_que}):'',
     el('div',{class:'ss',text:'Objetivo '+h.objetivo+' '+u+' · mínima '+h.minima+' '+u+' · días '+(h.dias_plan||'todos')+' · semáforo: verde desde '+ver+' %, rojo hasta '+roj+' % · del '+fmt(from)+' al '+fmt(fin)})),right));
   /* indicadores principales */
   const wl='Semana '+(lw+1)+(nDaysLw<7?' (en curso, '+nDaysLw+' días)':'')+' frente a la semana '+lw;
@@ -783,13 +789,27 @@ function renderDash(){
   const cal=el('div',{class:'cal'});cal.append(el('span'),...DIAS.map(d=>el('span',{class:'cd',text:d})));
   const ws=[...new Set(days.map(d=>weekStart(d.f)))].sort();
   ws.forEach(w=>{cal.append(el('span',{class:'cw2',text:fmt(w).replace(/^\S+\s/,'')}));for(let i=0;i<7;i++){const f=addDays(w,i),d=days.find(x=>x.f===f);
-    cal.append(el('span',{class:'cc'+(d?' '+d.st:' out'),title:d?fmt(f):''}))}});
+    cal.append(el('span',{class:'cc'+(d?' '+d.st:' out'),title:d?fmt(f):''},d?el('b',{text:String(+f.slice(8))}):'',d&&d.valor!=null&&!isNaN(d.valor)?el('i',{text:String(d.valor).replace('.',',')}):''))}});
+  cal.style.gridTemplateRows='auto repeat('+ws.length+',minmax(18px,1fr))';
   const lg2=el('div',{class:'lg'},...[['comp','Completo'],['min','Mínima'],['no','No salió'],['sin','Sin registro'],['libre','Libre']].map(([k,t])=>el('span',null,el('i',{style:'background:'+C[k]+(k==='libre'?';outline:1px dashed #B9B0A0':'')}),t)));
-  G.append(panel('Cada día',el('div',{class:'col'},cal,lg2)));
-  G.append(panel('¿Qué pasó cuando no salió completo?',cv('ch-motivos')));
-  G.append(panel('¿Qué protecciones fallaron?',cv('ch-pokas')));
+  const pCal=panel('Cada día',el('div',{class:'col'},el('div',{style:'width:100%;display:flex;flex-direction:column;gap:6px;flex:1;min-height:0'},cal,el('div',{style:'display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap'},lg2,el('span',{class:'ts',text:'En cada día: la fecha y lo que hiciste'+(u?' ('+u+')':'')+'.'})))));pCal.style.gridColumn='1/-1';G.append(pCal);
+  const G2=el('div',{class:'grid',style:'grid-template-columns:repeat(2,minmax(0,1fr))'});
+  G2.append(panel('¿Qué pasó cuando no salió completo?',cv('ch-motivos')));
+  G2.append(panel('¿Qué protecciones fallaron?',cv('ch-pokas')));
+  const MED=(()=>{try{const a=JSON.parse(h.senales||'[]');return Array.isArray(a)?a.filter(m=>m&&m.pregunta).slice(0,2):[]}catch(e){return[]}})();
+  {
+    const R3=el('div',{style:'grid-column:1/-1;display:grid;grid-template-columns:repeat('+Math.max(1,MED.length)+',minmax(0,1fr));gap:10px;min-height:0;min-width:0'});
+    MED.forEach((m,i)=>R3.append(el('section',{class:'pn',style:'min-width:0'},el('h4',{text:'Mi para qué · '+shortTxt(m.pregunta,80)}),
+      el('div',{style:'display:flex;gap:10px;flex:1;min-height:0;min-width:0'},el('div',{class:'cw',style:'flex:3;min-width:0'},el('canvas',{id:'ch-pq-c'+i,role:'img','aria-label':'Promedio por tipo de día'})),
+        el('div',{class:'cw',style:'flex:2;min-width:0'},el('canvas',{id:'ch-pq-w'+i,role:'img','aria-label':'Promedio por semana'}))),el('div',{class:'ts',id:'pq-cap'+i}))));
+    if(!MED.length)R3.append(el('section',{class:'pn'},el('h4',{text:'Mi para qué'}),el('p',{class:'muted',style:'font-size:12px',text:'Este hábito todavía no tiene «Mi para qué». Se define en el diseño del hábito: para qué lo quiere y hasta 2 señales de que le está sirviendo.'})));
+    G2.append(R3)}
   D.append(G);
-  D.append(el('footer',{class:'sf',text:'Del talento al hábito · Panel MOTOR · Diseñado por Josselyn Pérez · Datos hasta el '+fmt(fin)+' · Cumplimiento = días con al menos la mínima ÷ días registrados. Registro = días registrados ÷ días planificados. Dosis = valor medio en días cumplidos ÷ objetivo.'}));
+  D2.append(el('header',{class:'sh'},el('div',null,el('div',{class:'sk',text:'PANEL MOTOR · '+P+' · HOJA 2 DE 2'}),el('div',{class:'st',text:'Lo que pasó y tu para qué'}),
+    el('div',{class:'ss',text:(h.habito||'Micro hábito')+' · del '+fmt(from)+' al '+fmt(fin)}),h.para_que?el('div',{class:'ss',style:'color:#2D3F56;font-weight:700',text:'Mi para qué: '+h.para_que}):'')));
+  D2.append(G2);SH.append(D2);
+  const foot=()=>el('footer',{class:'sf',text:'Del talento al hábito · Panel MOTOR · Diseñado por Josselyn Pérez · Datos hasta el '+fmt(fin)+' · Cumplimiento = días con al menos la mínima ÷ días registrados. Registro = días registrados ÷ días planificados. Dosis = valor medio en días cumplidos ÷ objetivo.'});
+  D.append(foot());D2.append(foot());
   fitSheet();
   /* datos de los gráficos */
   const base={scales:{x:{ticks:{color:C.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:C.tick,font:{size:10}},grid:{color:C.grid}}},plugins:{legend:{display:false}}};
@@ -815,11 +835,36 @@ function renderDash(){
   const pkl=Object.keys(pc);
   if(pkl.length)hb('ch-pokas',pkl.map(p=>{const i=p.indexOf(': ');return i<0?[shortTxt(p,24)]:[p.slice(0,i),shortTxt(p.slice(i+2),24)]}),pkl.map(p=>pc[p]),C.arena);
   else{const c=document.getElementById('ch-pokas');c.parentNode.replaceChild(el('p',{class:'muted',text:'No hay poka-yokes en el plan de este hábito.'}),c)}
+  /* Mi para qué */
+  const senRows=rows.filter(r=>r.tipo==='senal'&&r.habito_id===h.habito_id&&r.fecha>=from&&r.fecha<=fin);
+  const stOf=f=>{const d=all.find(x=>x.f===f);if(!d)return null;if(d.st==='extra')return d.r&&d.r.cumplio_habito==='si'?'comp':'min';return d.st};
+  const GR=[['comp','Completo'],['min','Solo la mínima'],['no','No salió'],['libre','Día libre']],MINN=3;
+  MED.forEach((m,i)=>{
+    const sino=m.tipo==='sino',val=r=>sino?(r.senal_valor==='si'?100:0):+String(r.senal_valor).replace(',','.');
+    const mine=senRows.filter(r=>+r.senal_n===i+1&&!isNaN(val(r)));
+    const avg=a=>a.length?(sino?Math.round(a.reduce((x,y)=>x+y,0)/a.length):Math.round(a.reduce((x,y)=>x+y,0)/a.length*10)/10):null;
+    const fv=v=>v==null?'—':sino?v+' %':String(v).replace('.',',');
+    const by={};GR.forEach(([k])=>by[k]=[]);mine.forEach(r=>{const k=stOf(r.fecha);if(by[k])by[k].push(val(r))});
+    const shown=GR.filter(([k])=>by[k].length>=MINN),few=GR.filter(([k])=>by[k].length>0&&by[k].length<MINN);
+    const yax=sino?{min:0,max:100,ticks:{color:C.tick,font:{size:10},callback:v=>v+' %'},grid:{color:C.grid}}:m.tipo==='escala'?{min:0,max:5,ticks:{color:C.tick,font:{size:10},stepSize:1},grid:{color:C.grid}}:{beginAtZero:true,ticks:{color:C.tick,font:{size:10}},grid:{color:C.grid}};
+    const lbl={id:'lblpq',afterDatasetsDraw(ch){const{ctx}=ch;ch.data.datasets.forEach((ds,j)=>ch.getDatasetMeta(j).data.forEach((p,k)=>{const v=ds.data[k];if(v==null)return;ctx.save();ctx.fillStyle=C.ink;ctx.font='600 10px "Nunito Sans",sans-serif';ctx.textAlign='center';ctx.fillText(fv(v),p.x,p.y-6);ctx.restore()}))}};
+    if(shown.length)chart('ch-pq-c'+i,{type:'bar',data:{labels:shown.map(([k,t])=>t+' (n='+by[k].length+')'),datasets:[{data:shown.map(([k])=>avg(by[k])),backgroundColor:shown.map(([k])=>C[k]),borderColor:shown.map(([k])=>k==='libre'?'#B9B0A0':C[k]),borderWidth:1,borderRadius:4,maxBarThickness:44}]},
+      options:Object.assign({},base,{layout:{padding:{top:16}},scales:{x:base.scales.x,y:yax}}),plugins:[lbl]});
+    else{const c=document.getElementById('ch-pq-c'+i);c.parentNode.replaceChild(el('p',{class:'muted',style:'font-size:11px',text:mine.length?'Todavía hay pocos días por tipo para comparar (se necesitan al menos '+MINN+').':'Aún no hay respuestas de esta señal en el periodo.'}),c)}
+    const wk=W.map(w=>avg(mine.filter(r=>Math.floor(ddiff(h.inicio,r.fecha)/7)===w).map(val)));
+    if(mine.length)chart('ch-pq-w'+i,{type:'line',data:{labels:W.map(w=>'Sem '+(w+1)),datasets:[{data:wk,borderColor:C.noche,backgroundColor:C.noche,borderWidth:2,pointRadius:4,pointBorderColor:'#fff',pointBorderWidth:2,spanGaps:true}]},
+      options:Object.assign({},base,{layout:{padding:{top:16,right:8}},scales:{x:base.scales.x,y:yax}}),plugins:[lbl]});
+    else{const c=document.getElementById('ch-pq-w'+i);c.parentNode.removeChild(c)}
+    const cap=document.getElementById('pq-cap'+i);
+    if(cap)cap.textContent=(sino?'% de días con «sí»':'Promedio'+(m.tipo==='escala'?' de 1'+(m.bajo?' ('+m.bajo+')':'')+' a 5'+(m.alto?' ('+m.alto+')':''):(m.unidad?' en '+m.unidad:'')))+
+      ' por tipo de día (izquierda) y por semana (derecha)'+(m.siguiente?'; medido a la mañana siguiente':'')+'. Dato subjetivo: muestra si van juntos, no que el hábito lo cause.'+
+      (few.length?' Con menos de '+MINN+' días no se compara: '+few.map(([k,t])=>t+' ('+by[k].length+')').join(', ')+'.':'');
+  });
 }
 /* ajuste a pantalla, modo presentación, PDF e imagen */
-function fitSheet(){const s=$('sheet'),w=$('sheet-wrap');if(!s||!w)return;const pres=document.body.classList.contains('present');
+function fitSheet(){const s=$('sheet'),w=$('sheet-wrap');if(!s||!w)return;const pres=document.body.classList.contains('present'),H0=s.offsetHeight||720;
   const k=pres?Math.min(1.5,(innerWidth-32)/1040,(innerHeight-110)/720):Math.min(1,w.clientWidth/1040);
-  s.style.transform='scale('+k+')';w.style.height=(720*k)+'px'}
+  s.style.transform='scale('+k+')';w.style.height=(H0*k)+'px'}
 addEventListener('resize',fitSheet);
 $('pa-hab').addEventListener('change',renderDash);
 $('pa-cvista').addEventListener('change',renderDash);
@@ -831,7 +876,7 @@ $('pa-png').addEventListener('click',async()=>{
   if(typeof html2canvas==='undefined'){$('pa-toast2').textContent='No cargó la herramienta de imagen. Usa «Descargar PDF».';return}
   const s=$('sheet'),t=s.style.transform;s.style.transform='none';
   try{const c=await html2canvas(s,{scale:2,backgroundColor:'#FAF7F2'});const a=document.createElement('a');
-    a.href=c.toDataURL('image/png');a.download='tablero-'+($('pa-part').value||'participante').toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+today()+'.png';a.click()}
+    a.href=c.toDataURL('image/png');a.download='tablero-2-hojas-'+($('pa-part').value||'participante').toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+today()+'.png';a.click()}
   finally{s.style.transform=t;fitSheet()}
 });
 

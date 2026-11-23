@@ -117,7 +117,7 @@ body.present .wrap{max-width:none;padding:12px}
 #sheet .zone{font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;background:#EFE9DE}
 #sheet .zone.ok{background:#6B7949;color:#FAF7F2}#sheet .zone.warn{background:#DBC8A5;color:#1E1E1C}#sheet .zone.bad{background:#A55942;color:#FAF7F2}
 #sheet .srbai{display:flex;align-items:center;gap:6px;font-size:10.5px}#sheet .meter{width:90px;height:7px;background:#E6E0D5;border-radius:4px;overflow:hidden}#sheet .meter i{display:block;height:100%;background:#2D3F56}
-#sheet .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+#sheet .tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
 #sheet .tile{background:#FFFFFF;border:1px solid #E6E0D5;border-radius:8px;padding:8px 12px}
 #sheet .tl{font-size:11px;font-weight:700;color:#55534E}#sheet .tb{font-family:Lora,Georgia,serif;font-size:30px;font-weight:600;line-height:1.05}
 #sheet .dl{font-size:11px;font-weight:700;color:#6E6B64}#sheet .dl.up{color:#4F5B33}#sheet .dl.down{color:#A55942}
@@ -644,7 +644,7 @@ $('pa-descargar').addEventListener('click',()=>{
   const regs=Object.values(pool).sort((a,b)=>(a.participante+a.tipo+(a.fecha||'')).localeCompare(b.participante+b.tipo+(b.fecha||'')));
   const leeme=[['Libro maestro del Registro MOTOR · generado el '+today()],[''],['Registros: todo lo recibido, sin duplicados. Es la hoja que el panel vuelve a leer: no cambies sus columnas.'],
     ['Resumen: indicadores por participante y hábito desde el inicio de cada hábito hasta el último dato recibido.'],[''],
-    ['Cumplimiento = días con al menos la conducta mínima ÷ días planificados (un día planificado sin registro cuenta como no cumplido).'],
+    ['Cumplimiento = días con al menos la conducta mínima ÷ días registrados. Un día planificado sin registro no tiene dato: no cuenta como no cumplido.'],['Registro = días registrados ÷ días planificados. Se mira aparte: registrar no es parte del hábito.'],
     ['Dosis = valor medio en los días cumplidos ÷ valor objetivo.'],['Ejecución espontánea = días sin recordatorio ÷ días cumplidos.'],[''],
     ['Para seguir: la próxima vez sube este libro en el panel junto con los archivos o mensajes nuevos, y descarga el libro actualizado.']];
   const x=toXlsx([['Léeme',leeme,null,true],['Resumen',resumenRows()],['Registros',regs,COLS]]);
@@ -667,10 +667,10 @@ function metrics(h,diarios,ini0,fin){
   const regP=reg.filter(r=>r.planificado!=='no'&&plannedDays.includes(r.fecha));
   const cumpl=regP.filter(r=>r.cumplio_minima==='si'),comp=regP.filter(r=>r.cumplio_habito==='si'),soloMin=cumpl.length-comp.length;
   const sinReg=plannedDays.length-regP.length,extra=reg.filter(r=>r.planificado==='no'&&r.cumplio_minima==='si').length;
-  const cumplPct=pct(cumpl.length,plannedDays.length);
+  const cumplPct=pct(cumpl.length,regP.length),registroPct=pct(regP.length,plannedDays.length);
   const vals=cumpl.map(r=>+r.valor).filter(v=>!isNaN(v));const dosis=vals.length&&+h.objetivo?Math.round(vals.reduce((a,b)=>a+b,0)/vals.length/(+h.objetivo)*100):null;
   const espont=pct(cumpl.filter(r=>r.sin_recordatorio==='si').length,cumpl.length);
-  return {ini,plannedDays,reg,regP,cumpl,comp,soloMin,sinReg,extra,cumplPct,dosis,espont};
+  return {ini,plannedDays,reg,regP,cumpl,comp,soloMin,sinReg,extra,cumplPct,registroPct,dosis,espont};
 }
 function resumenRows(){
   const out=[];const all=Object.values(pool);
@@ -681,7 +681,7 @@ function resumenRows(){
       const sr=rows.filter(r=>r.tipo==='srbai'&&r.habito_id===h.habito_id).sort((a,b)=>a.fecha.localeCompare(b.fecha)).pop();
       const hi=rows.filter(r=>r.tipo==='hito'&&r.habito_id===h.habito_id).pop();
       out.push({'Participante':P,'Hábito':h.habito,'Tipo':h.tipo_habito==='meta'?'Meta':'Micro hábito','Desde':m.ini,'Hasta':fechas[fechas.length-1],
-        'Días planificados':m.plannedDays.length,'Días cumplidos (al menos la mínima)':m.cumpl.length,'Cumplimiento %':m.cumplPct??'','Semáforo':zone(m.cumplPct,h)[1],
+        'Días planificados':m.plannedDays.length,'Días registrados':m.regP.length,'Registro %':m.registroPct??'','Días cumplidos (al menos la mínima)':m.cumpl.length,'Cumplimiento %':m.cumplPct??'','Semáforo':zone(m.cumplPct,h)[1],
         'Días completos':m.comp.length,'Días solo mínima':m.soloMin,'Dosis %':m.dosis??'','Ejecución espontánea %':m.espont??'','Días planificados sin registro':m.sinReg,
         'Días libres en que igual lo hizo':m.extra,'Último SRBAI':sr?sr.srbai_prom:'','Fecha último SRBAI':sr?sr.fecha:'','Hito':h.hito||'','Hito alcanzado':hi?hi.hito_alcanzado:''})});
   });
@@ -713,7 +713,8 @@ function dayList(h,diarios,from,to){
 function stat(days,obj){
   const P=days.filter(d=>d.p),c=P.filter(d=>d.st==='comp'||d.st==='min'),comp=P.filter(d=>d.st==='comp').length;
   const vals=c.map(d=>d.valor).filter(v=>v!=null&&!isNaN(v));
-  return {p:P.length,c:c.length,comp,min:c.length-comp,no:P.length-c.length,cumpl:pct(c.length,P.length),
+  const R=P.filter(d=>d.st!=='sin');
+  return {p:P.length,r:R.length,c:c.length,comp,min:c.length-comp,no:R.length-c.length,sin:P.length-R.length,cumpl:pct(c.length,R.length),registro:pct(R.length,P.length),
     dosis:vals.length&&+obj?Math.round(vals.reduce((a,b)=>a+b,0)/vals.length/(+obj)*100):null,espont:pct(c.filter(d=>d.sinrec).length,c.length)};
 }
 function tile(label,big,dl,sub,sub2){return el('div',{class:'tile'},el('div',{class:'tl',text:label}),el('div',{class:'tb',text:big}),dl,el('div',{class:'ts',text:sub}),sub2?el('div',{class:'ts',text:sub2}):'')}
@@ -763,19 +764,20 @@ function renderDash(){
   /* indicadores principales */
   const wl='Semana '+(lw+1)+(nDaysLw<7?' (en curso, '+nDaysLw+' días)':'')+' frente a la semana '+lw;
   D.append(el('div',{class:'tiles'},
-    tile('Cumplimiento',cw.cumpl==null?'—':cw.cumpl+' %',delta(cw.cumpl,pw.cumpl,1),cw.c+' de '+cw.p+' días planificados','Bloque de 14 días: '+(cb.cumpl==null?'—':cb.cumpl+' %')+(pb.cumpl!=null&&cb.cumpl!=null?' ('+(cb.cumpl-pb.cumpl>=0?'+':'−')+Math.abs(cb.cumpl-pb.cumpl)+' frente al anterior)':'')),
+    tile('Cumplimiento',cw.cumpl==null?'—':cw.cumpl+' %',delta(cw.cumpl,pw.cumpl,1),cw.c+' de '+cw.r+' días registrados','Bloque de 14 días: '+(cb.cumpl==null?'—':cb.cumpl+' %')+(pb.cumpl!=null&&cb.cumpl!=null?' ('+(cb.cumpl-pb.cumpl>=0?'+':'−')+Math.abs(cb.cumpl-pb.cumpl)+' frente al anterior)':'')),
+    tile('Registro',cw.registro==null?'—':cw.registro+' %',delta(cw.registro,pw.registro,1),cw.r+' de '+cw.p+' días planificados','Bloque de 14 días: '+(cb.registro==null?'—':cb.registro+' %')+' · aparte del cumplimiento'),
     tile('Dosis',cw.dosis==null?'—':cw.dosis+' %',delta(cw.dosis,pw.dosis,1),'Valor medio frente al objetivo','Bloque de 14 días: '+(cb.dosis==null?'—':cb.dosis+' %')+(pb.dosis!=null&&cb.dosis!=null?' ('+(cb.dosis-pb.dosis>=0?'+':'−')+Math.abs(cb.dosis-pb.dosis)+' frente al anterior)':'')),
     tile('Días solo en la mínima',String(cw.min),delta(cw.min,lw>0?pw.min:null,0),'de '+cw.c+' días cumplidos',''),
     tile('Sin recordatorio',cw.espont==null?'—':cw.espont+' %',delta(cw.espont,pw.espont,1),'de los días cumplidos','')));
-  D.append(el('div',{class:'cap',text:wl+'. Con pocos días planificados por semana, un solo día mueve mucho el porcentaje: el bloque de 14 días es más estable.'}));
+  D.append(el('div',{class:'cap',text:wl+'. Con pocos días por semana, un solo día mueve mucho el porcentaje: el bloque de 14 días es más estable. Los días sin registro no cuentan como no cumplidos: se ven aparte, en Registro.'}));
   /* cuadrícula de gráficos */
   const G=el('div',{class:'grid'});
   const panel=(t,body)=>el('section',{class:'pn'},el('h4',{text:t}),body);
   const cv=id=>el('div',{class:'cw'},el('canvas',{id,role:'img','aria-label':id}));
   const porSemana=$('pa-cvista').value==='7';
-  G.append(panel(porSemana?'Cumplimiento semana a semana':'Cumplimiento por bloque de 14 días',cv('ch-bloques')));
+  G.append(panel(porSemana?'Cumplimiento semana a semana':'Cumplimiento por bloque de 14 días',el('div',{class:'col'},el('div',{class:'lg'},el('span',null,el('i',{style:'background:'+C.noche}),'Cumplimiento (días registrados)'),el('span',null,el('i',{style:'background:#8E8A80'}),'Registro (línea punteada)')),cv('ch-bloques'))));
   G.append(panel('Dosis semana a semana',cv('ch-dosis')));
-  const lg=el('div',{class:'lg'},...[['comp','Completo'],['min','Solo la mínima'],['no','No cumplido o sin registro']].map(([k,t])=>el('span',null,el('i',{style:'background:'+C[k]}),t)));
+  const lg=el('div',{class:'lg'},...[['comp','Completo'],['min','Solo la mínima'],['no','No salió'],['sin','Sin registro']].map(([k,t])=>el('span',null,el('i',{style:'background:'+C[k]}),t)));
   G.append(panel('Semana a semana (días planificados)',el('div',{class:'col'},lg,cv('ch-semanas'))));
   /* calendario */
   const cal=el('div',{class:'cal'});cal.append(el('span'),...DIAS.map(d=>el('span',{class:'cd',text:d})));
@@ -787,22 +789,22 @@ function renderDash(){
   G.append(panel('¿Qué pasó cuando no salió completo?',cv('ch-motivos')));
   G.append(panel('¿Qué protecciones fallaron?',cv('ch-pokas')));
   D.append(G);
-  D.append(el('footer',{class:'sf',text:'Del talento al hábito · Panel MOTOR · Diseñado por Josselyn Pérez · Datos hasta el '+fmt(fin)+' · Cumplimiento = días con al menos la mínima ÷ días planificados. Dosis = valor medio en días cumplidos ÷ objetivo.'}));
+  D.append(el('footer',{class:'sf',text:'Del talento al hábito · Panel MOTOR · Diseñado por Josselyn Pérez · Datos hasta el '+fmt(fin)+' · Cumplimiento = días con al menos la mínima ÷ días registrados. Registro = días registrados ÷ días planificados. Dosis = valor medio en días cumplidos ÷ objetivo.'}));
   fitSheet();
   /* datos de los gráficos */
   const base={scales:{x:{ticks:{color:C.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:C.tick,font:{size:10}},grid:{color:C.grid}}},plugins:{legend:{display:false}}};
   const bandas={id:'bandas',beforeDraw(ch){const{ctx,chartArea:a,scales:{y}}=ch;[[ver,100,'rgba(107,121,73,0.18)'],[roj,ver,'rgba(219,200,165,0.40)'],[0,roj,'rgba(165,89,66,0.16)']].forEach(([lo,hi,col])=>{ctx.fillStyle=col;ctx.fillRect(a.left,y.getPixelForValue(hi),a.right-a.left,y.getPixelForValue(lo)-y.getPixelForValue(hi))})}};
-  const etiquetas={id:'etq',afterDatasetsDraw(ch){const{ctx}=ch;ch.data.datasets.forEach((ds,i)=>{if(ds.type==='bar'&&ch.config.options.indexAxis!=='y')return;ch.getDatasetMeta(i).data.forEach((p,j)=>{const v=ds.data[j];if(v==null)return;ctx.save();ctx.fillStyle=C.ink;ctx.font='600 10px "Nunito Sans",sans-serif';
+  const etiquetas={id:'etq',afterDatasetsDraw(ch){const{ctx}=ch;ch.data.datasets.forEach((ds,i)=>{if(ds.noLabel||(ds.type==='bar'&&ch.config.options.indexAxis!=='y'))return;ch.getDatasetMeta(i).data.forEach((p,j)=>{const v=ds.data[j];if(v==null)return;ctx.save();ctx.fillStyle=C.ink;ctx.font='600 10px "Nunito Sans",sans-serif';
     if(ch.config.options.indexAxis==='y'){ctx.textAlign='left';ctx.fillText(String(v),p.x+4,p.y+3)}else{ctx.textAlign='center';ctx.fillText(v+' %',p.x,p.y-9)}ctx.restore()})})}};
   const bl=B.map(b=>'Días '+(b*14+1)+'–'+(b*14+14));
-  chart('ch-bloques',{type:'line',data:{labels:porSemana?W.map(w=>'Sem '+(w+1)):bl,datasets:[{data:porSemana?W.map(w=>sw(w).cumpl):B.map(b=>sb(b).cumpl),borderColor:C.noche,backgroundColor:C.noche,borderWidth:2,pointRadius:5,pointBorderColor:'#fff',pointBorderWidth:2}]},
+  chart('ch-bloques',{type:'line',data:{labels:porSemana?W.map(w=>'Sem '+(w+1)):bl,datasets:[{label:'Cumplimiento',data:porSemana?W.map(w=>sw(w).cumpl):B.map(b=>sb(b).cumpl),borderColor:C.noche,backgroundColor:C.noche,borderWidth:2,pointRadius:5,pointBorderColor:'#fff',pointBorderWidth:2},{label:'Registro',noLabel:true,data:porSemana?W.map(w=>sw(w).registro):B.map(b=>sb(b).registro),borderColor:'#8E8A80',backgroundColor:'#8E8A80',borderDash:[4,4],borderWidth:1.5,pointRadius:3,pointBorderColor:'#fff',pointBorderWidth:1}]},
     options:Object.assign({},base,{layout:{padding:{top:6,right:8}},scales:{x:base.scales.x,y:{min:0,max:112,ticks:{color:C.tick,font:{size:10},stepSize:20,callback:v=>v<=100?v+' %':''},grid:{color:C.grid}}}}),plugins:[bandas,etiquetas]});
   const dz=W.map(w=>sw(w).dosis),dmax=Math.max(110,...dz.filter(v=>v!=null).map(v=>v+15));
   const objLine={id:'obj',afterDraw(ch){const{ctx,chartArea:a,scales:{y}}=ch;const py=y.getPixelForValue(100);ctx.save();ctx.setLineDash([5,4]);ctx.strokeStyle='#8E8A80';ctx.beginPath();ctx.moveTo(a.left,py);ctx.lineTo(a.right,py);ctx.stroke();ctx.fillStyle='#6E6B64';ctx.font='10px "Nunito Sans",sans-serif';ctx.textAlign='left';ctx.fillText('Objetivo',a.left+4,py-4);ctx.restore()}};
   chart('ch-dosis',{type:'line',data:{labels:W.map(w=>'Sem '+(w+1)),datasets:[{data:dz,borderColor:C.comp,backgroundColor:'rgba(107,121,73,0.12)',fill:true,borderWidth:2,pointRadius:4,pointBackgroundColor:C.comp,pointBorderColor:'#fff',pointBorderWidth:2,spanGaps:true,tension:0.2}]},
     options:Object.assign({},base,{layout:{padding:{top:14,right:8}},scales:{x:base.scales.x,y:{min:0,max:Math.ceil(dmax/10)*10,ticks:{color:C.tick,font:{size:10},callback:v=>v+' %'},grid:{color:C.grid}}}}),plugins:[objLine,etiquetas]});
   const S=W.map(sw);
-  chart('ch-semanas',{type:'bar',data:{labels:W.map(w=>'Sem '+(w+1)),datasets:[['comp','Completo'],['min','Solo la mínima'],['no','No cumplido']].map(([k,t])=>({type:'bar',label:t,data:S.map(s=>s[k]),backgroundColor:C[k],borderColor:'#FFFFFF',borderWidth:{top:2},maxBarThickness:26}))},
+  chart('ch-semanas',{type:'bar',data:{labels:W.map(w=>'Sem '+(w+1)),datasets:[['comp','Completo'],['min','Solo la mínima'],['no','No salió'],['sin','Sin registro']].map(([k,t])=>({type:'bar',label:t,data:S.map(s=>s[k]),backgroundColor:C[k],borderColor:'#FFFFFF',borderWidth:{top:2},maxBarThickness:26}))},
     options:Object.assign({},base,{scales:{x:Object.assign({stacked:true},base.scales.x),y:{stacked:true,ticks:{color:C.tick,font:{size:10},stepSize:1},grid:{color:C.grid}}}})});
   const fall=days.filter(d=>d.r&&d.r.motivo);const mc={};Object.keys(MOT).forEach(k=>mc[k]=0);fall.forEach(d=>{const k=MOT[d.r.motivo]?d.r.motivo:'otra';mc[k]++});
   const hb=(id,labels,data,color)=>chart(id,{type:'bar',data:{labels,datasets:[{data,backgroundColor:color,borderRadius:4,maxBarThickness:18}]},

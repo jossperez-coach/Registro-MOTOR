@@ -597,7 +597,7 @@ $('pa-descargar').addEventListener('click',()=>{
   const regs=Object.values(pool).sort((a,b)=>(a.participante+a.tipo+(a.fecha||'')).localeCompare(b.participante+b.tipo+(b.fecha||'')));
   const leeme=[['Libro maestro del Registro MOTOR · generado el '+today()],[''],['Registros: todo lo recibido, sin duplicados. Es la hoja que el panel vuelve a leer: no cambies sus columnas.'],
     ['Resumen: indicadores por participante y hábito desde el inicio de cada hábito hasta el último dato recibido.'],[''],
-    ['Cumplimiento = días con al menos la conducta mínima ÷ días planificados (un día planificado sin registro cuenta como no cumplido).'],
+    ['Cumplimiento = días con al menos la conducta mínima ÷ días registrados. Un día planificado sin registro no tiene dato: no cuenta como no cumplido.'],['Registro = días registrados ÷ días planificados. Se mira aparte: registrar no es parte del hábito.'],
     ['Dosis = valor medio en los días cumplidos ÷ valor objetivo.'],['Ejecución espontánea = días sin recordatorio ÷ días cumplidos.'],[''],
     ['Para seguir: la próxima vez sube este libro en el panel junto con los archivos o mensajes nuevos, y descarga el libro actualizado.']];
   const x=toXlsx([['Léeme',leeme,null,true],['Resumen',resumenRows()],['Registros',regs,COLS]]);
@@ -626,7 +626,7 @@ function metrics(h,diarios,ini0,fin){
   const regP=reg.filter(r=>r.planificado!=='no'&&plannedDays.includes(r.fecha));
   const cumpl=regP.filter(r=>r.cumplio_minima==='si'),comp=regP.filter(r=>r.cumplio_habito==='si'),soloMin=cumpl.length-comp.length;
   const sinReg=plannedDays.length-regP.length,extra=reg.filter(r=>r.planificado==='no'&&r.cumplio_minima==='si').length;
-  const cumplPct=pct(cumpl.length,plannedDays.length);
+  const cumplPct=pct(cumpl.length,regP.length);
   const vals=cumpl.map(r=>+r.valor).filter(v=>!isNaN(v));const dosis=vals.length&&+h.objetivo?Math.round(vals.reduce((a,b)=>a+b,0)/vals.length/(+h.objetivo)*100):null;
   const espont=pct(cumpl.filter(r=>r.sin_recordatorio==='si').length,cumpl.length);
   return {ini,plannedDays,reg,regP,cumpl,comp,soloMin,sinReg,extra,cumplPct,dosis,espont};
@@ -656,13 +656,13 @@ function renderDash(){
   const ini0=per?addDays(fin,-(per-1)):fechas[0];
   $('pa-rango').textContent='Del '+fmt(ini0)+' al '+fmt(fin)+' (último dato recibido).';
   Object.values(plans).forEach(h=>{
-    const {plannedDays,reg,cumpl,comp,soloMin,sinReg,extra,cumplPct,dosis,espont}=metrics(h,diarios,ini0,fin);
+    const {plannedDays,reg,regP,cumpl,comp,soloMin,sinReg,extra,cumplPct,dosis,espont}=metrics(h,diarios,ini0,fin);
     const [zc,zl]=zone(cumplPct,h);
     const card=el('div',{class:'card'});
     card.append(el('div',{class:'hab-top'},el('div',null,el('h2',{text:h.habito}),el('p',{class:'muted',text:(h.tipo_habito==='meta'?'Hábito de la meta':'Micro hábito')+' · objetivo '+h.objetivo+' '+(h.unidad||'')+' · mínima '+h.minima+' '+(h.unidad||'')+' · días '+(h.dias_plan||'todos')})),
       el('span',{class:'pill '+zc,text:(zc==='ok'?'✓ ':zc==='bad'?'! ':zc==='warn'?'~ ':'')+'Semáforo: '+zl})));
     card.append(el('div',{class:'kpis'},
-      kpi(pctTxt(cumplPct),'Cumplimiento: '+cumpl.length+' de '+plannedDays.length+' días planificados'),
+      kpi(pctTxt(cumplPct),'Cumplimiento: '+cumpl.length+' de '+regP.length+' días registrados ('+regP.length+' de '+plannedDays.length+' planificados con registro)'),
       kpi(pctTxt(dosis),'Dosis: valor medio frente al objetivo'),
       kpi(cumpl.length?soloMin+' de '+cumpl.length:'—','Días en mínimo'),
       kpi(pctTxt(espont),'Ejecución espontánea (sin recordatorio)')));

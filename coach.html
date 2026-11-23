@@ -255,6 +255,7 @@ body.present .wrap{max-width:none;padding:12px}
       <div class="card no-present ctrl">
         <label>Participante<select id="pa-part"></select></label>
         <label id="pa-hab-row" hidden>Hábito<select id="pa-hab"></select></label>
+        <label>Cumplimiento por<select id="pa-cvista"><option value="7" selected>Semana (7 días)</option><option value="14">Bloque de 14 días</option></select></label>
         <label>Periodo<select id="pa-per"><option value="0" selected>Todo desde el inicio</option><option value="14">Últimos 14 días</option></select></label>
         <div class="inline"><button class="btn" id="pa-present">Modo presentación</button><button class="btn sec" id="pa-pdf">Descargar PDF</button><button class="btn sec" id="pa-png">Descargar imagen</button></div>
         <p class="toast" id="pa-toast2"></p><p class="muted" id="pa-rango" hidden></p>
@@ -769,7 +770,8 @@ function renderDash(){
   const G=el('div',{class:'grid'});
   const panel=(t,body)=>el('section',{class:'pn'},el('h4',{text:t}),body);
   const cv=id=>el('div',{class:'cw'},el('canvas',{id,role:'img','aria-label':id}));
-  G.append(panel('Cumplimiento por bloque de 14 días',cv('ch-bloques')));
+  const porSemana=$('pa-cvista').value==='7';
+  G.append(panel(porSemana?'Cumplimiento semana a semana':'Cumplimiento por bloque de 14 días',cv('ch-bloques')));
   G.append(panel('Dosis semana a semana',cv('ch-dosis')));
   const lg=el('div',{class:'lg'},...[['comp','Completo'],['min','Solo la mínima'],['no','No cumplido o sin registro']].map(([k,t])=>el('span',null,el('i',{style:'background:'+C[k]}),t)));
   G.append(panel('Semana a semana (días planificados)',el('div',{class:'col'},lg,cv('ch-semanas'))));
@@ -791,8 +793,8 @@ function renderDash(){
   const etiquetas={id:'etq',afterDatasetsDraw(ch){const{ctx}=ch;ch.data.datasets.forEach((ds,i)=>{if(ds.type==='bar'&&ch.config.options.indexAxis!=='y')return;ch.getDatasetMeta(i).data.forEach((p,j)=>{const v=ds.data[j];if(v==null)return;ctx.save();ctx.fillStyle=C.ink;ctx.font='600 10px "Nunito Sans",sans-serif';
     if(ch.config.options.indexAxis==='y'){ctx.textAlign='left';ctx.fillText(String(v),p.x+4,p.y+3)}else{ctx.textAlign='center';ctx.fillText(v+' %',p.x,p.y-9)}ctx.restore()})})}};
   const bl=B.map(b=>'Días '+(b*14+1)+'–'+(b*14+14));
-  chart('ch-bloques',{type:'line',data:{labels:bl,datasets:[{data:B.map(b=>sb(b).cumpl),borderColor:C.noche,backgroundColor:C.noche,borderWidth:2,pointRadius:5,pointBorderColor:'#fff',pointBorderWidth:2}]},
-    options:Object.assign({},base,{layout:{padding:{top:14,right:8}},scales:{x:base.scales.x,y:{min:0,max:100,ticks:{color:C.tick,font:{size:10},stepSize:20,callback:v=>v+' %'},grid:{color:C.grid}}}}),plugins:[bandas,etiquetas]});
+  chart('ch-bloques',{type:'line',data:{labels:porSemana?W.map(w=>'Sem '+(w+1)):bl,datasets:[{data:porSemana?W.map(w=>sw(w).cumpl):B.map(b=>sb(b).cumpl),borderColor:C.noche,backgroundColor:C.noche,borderWidth:2,pointRadius:5,pointBorderColor:'#fff',pointBorderWidth:2}]},
+    options:Object.assign({},base,{layout:{padding:{top:6,right:8}},scales:{x:base.scales.x,y:{min:0,max:112,ticks:{color:C.tick,font:{size:10},stepSize:20,callback:v=>v<=100?v+' %':''},grid:{color:C.grid}}}}),plugins:[bandas,etiquetas]});
   const dz=W.map(w=>sw(w).dosis),dmax=Math.max(110,...dz.filter(v=>v!=null).map(v=>v+15));
   const objLine={id:'obj',afterDraw(ch){const{ctx,chartArea:a,scales:{y}}=ch;const py=y.getPixelForValue(100);ctx.save();ctx.setLineDash([5,4]);ctx.strokeStyle='#8E8A80';ctx.beginPath();ctx.moveTo(a.left,py);ctx.lineTo(a.right,py);ctx.stroke();ctx.fillStyle='#6E6B64';ctx.font='10px "Nunito Sans",sans-serif';ctx.textAlign='left';ctx.fillText('Objetivo',a.left+4,py-4);ctx.restore()}};
   chart('ch-dosis',{type:'line',data:{labels:W.map(w=>'Sem '+(w+1)),datasets:[{data:dz,borderColor:C.comp,backgroundColor:'rgba(107,121,73,0.12)',fill:true,borderWidth:2,pointRadius:4,pointBackgroundColor:C.comp,pointBorderColor:'#fff',pointBorderWidth:2,spanGaps:true,tension:0.2}]},
@@ -816,6 +818,7 @@ function fitSheet(){const s=$('sheet'),w=$('sheet-wrap');if(!s||!w)return;const 
   s.style.transform='scale('+k+')';w.style.height=(720*k)+'px'}
 addEventListener('resize',fitSheet);
 $('pa-hab').addEventListener('change',renderDash);
+$('pa-cvista').addEventListener('change',renderDash);
 $('pa-present').addEventListener('click',()=>{document.body.classList.add('present');fitSheet()});
 $('pa-salir').addEventListener('click',()=>{document.body.classList.remove('present');fitSheet()});
 addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('present')){document.body.classList.remove('present');fitSheet()}});

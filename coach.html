@@ -657,7 +657,7 @@ function plansFor(rows){
   const diarios=rows.filter(r=>r.tipo==='diario'),plans={};
   rows.filter(r=>r.tipo==='plan').forEach(r=>plans[r.habito_id]=r);
   [...new Set(diarios.map(r=>r.habito_id))].forEach(id=>{if(!plans[id]){const d=diarios.find(x=>x.habito_id===id);
-    plans[id]={habito_id:id,habito:d.habito||'Micro hábito',tipo_habito:'micro',objetivo:d.objetivo||'',minima:d.minima||'',unidad:d.unidad||'',dias_plan:'LMXJVSD',inicio:diarios.filter(x=>x.habito_id===id).map(x=>x.fecha).sort()[0],verde:80,rojo:40}}});
+    plans[id]={habito_id:id,habito:d.habito||'Micro hábito',tipo_habito:'micro',objetivo:d.objetivo||'',minima:d.minima||'',unidad:d.unidad||'',dias_plan:'LMXJVSD',inicio:diarios.filter(x=>x.habito_id===id).map(x=>x.fecha).sort()[0],verde:80,rojo:40,_sinPlan:true}}});
   return plans;
 }
 function metrics(h,diarios,ini0,fin){
@@ -749,14 +749,16 @@ function renderDash(){
   const sw=w=>stat(all.filter(d=>d.w===w),h.objetivo),sb=b=>stat(all.filter(d=>d.b===b),h.objetivo);
   const cw=sw(lw),pw=sw(lw-1),cb=sb(lb),pb=sb(lb-1);
   const nDaysLw=all.filter(d=>d.w===lw).length;
-  const zone=cb.cumpl==null?['','Sin datos']:cb.cumpl>=ver?['ok','Verde']:cb.cumpl<=roj?['bad','Rojo']:['warn','Amarillo'];
+  const porSem=$('pa-cvista').value==='7',zv=porSem?cw.cumpl:cb.cumpl;
+  const zone=zv==null?['','Sin datos']:zv>=ver?['ok','Verde']:zv<=roj?['bad','Rojo']:['warn','Amarillo'];
   const u=h.unidad||'';
   /* encabezado */
   const sr=rows.filter(r=>r.tipo==='srbai'&&r.habito_id===h.habito_id).sort((a,b)=>a.fecha.localeCompare(b.fecha)).pop();
-  const right=el('div',{class:'hright'},el('span',{class:'zone '+zone[0],text:'Semáforo del bloque actual: '+zone[1]}));
+  const right=el('div',{class:'hright'},el('span',{class:'zone '+zone[0],text:(porSem?'Semáforo de la semana actual: ':'Semáforo del bloque actual: ')+zone[1]+(zv==null?'':' ('+zv+' %)')}));
   if(sr){const v=+String(sr.srbai_prom).replace(',','.');right.append(el('div',{class:'srbai'},el('span',{text:'Automaticidad (SRBAI)'}),
     el('div',{class:'meter'},el('i',{style:'width:'+Math.max(0,Math.min(100,(v-1)/4*100))+'%'})),el('b',{text:String(v).replace('.',',')+' / 5'})))}
   D.append(el('header',{class:'sh'},el('div',null,el('div',{class:'sk',text:'PANEL MOTOR · '+P}),el('div',{class:'st',text:h.habito||'Micro hábito'}),
+    h._sinPlan?el('div',{class:'ss',style:'color:#A55942;font-weight:700',text:'Atención: los archivos no traen el plan de este hábito, así que uso umbrales por defecto (80 % y 40 %). Pide a la persona que te reenvíe su registro completo.'}):'',
     el('div',{class:'ss',text:'Objetivo '+h.objetivo+' '+u+' · mínima '+h.minima+' '+u+' · días '+(h.dias_plan||'todos')+' · semáforo: verde desde '+ver+' %, rojo hasta '+roj+' % · del '+fmt(from)+' al '+fmt(fin)})),right));
   /* indicadores principales */
   const wl='Semana '+(lw+1)+(nDaysLw<7?' (en curso, '+nDaysLw+' días)':'')+' frente a la semana '+lw;
